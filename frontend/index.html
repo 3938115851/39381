@@ -518,10 +518,72 @@
         </footer>
     </div>
 
-    <!-- 模态框容器 -->
-    <div id="modal-container">
-        <!-- 各种模态框将通过JavaScript动态创建 -->
-    </div>
+    <!-- 设置模态框 -->
+        <div id="settings-modal" class="hidden fixed inset-0 bg-black bg-opacity-80 z-50 flex items-center justify-center">
+            <div class="card max-w-md w-full mx-4">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-2xl font-bold">服务器设置</h3>
+                    <button id="btn-close-settings" class="text-gray-400 hover:text-white text-2xl">
+                        <i class="fa fa-times"></i>
+                    </button>
+                </div>
+                
+                <form id="server-settings-form">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">服务器地址</label>
+                            <input type="text" id="server-url" class="input-primary w-full" placeholder="例如: http://localhost:3000" required>
+                            <p class="text-xs text-gray-400 mt-1">请输入完整的服务器URL，包括协议和端口</p>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium mb-2">连接超时(秒)</label>
+                            <input type="number" id="connection-timeout" class="input-primary w-full" min="5" max="30" value="10">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium mb-2">重连尝试次数</label>
+                            <input type="number" id="reconnect-attempts" class="input-primary w-full" min="1" max="10" value="5">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium mb-2">重连间隔(毫秒)</label>
+                            <input type="number" id="reconnect-interval" class="input-primary w-full" min="1000" max="10000" value="3000">
+                        </div>
+                        
+                        <div class="flex items-center">
+                            <input type="checkbox" id="enable-backup-servers" class="mr-2" checked>
+                            <label for="enable-backup-servers" class="text-sm">启用备用服务器</label>
+                        </div>
+                        
+                        <div class="btn-group">
+                            <button type="submit" class="btn-primary w-full">
+                                <i class="fa fa-save mr-2"></i>保存设置
+                            </button>
+                            <button type="button" id="btn-test-connection" class="btn-secondary w-full">
+                                <i class="fa fa-plug mr-2"></i>测试连接
+                            </button>
+                            <button type="button" id="btn-reset-settings" class="btn-outline w-full">
+                                <i class="fa fa-refresh mr-2"></i>重置为默认
+                            </button>
+                        </div>
+                    </div>
+                </form>
+                
+                <!-- 连接测试结果 -->
+                <div id="connection-test-result" class="mt-4 hidden">
+                    <div class="p-3 rounded-lg">
+                        <h4 class="font-bold mb-2">连接测试结果</h4>
+                        <div id="test-result-content" class="text-sm"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 模态框容器 -->
+        <div id="modal-container">
+            <!-- 各种模态框将通过JavaScript动态创建 -->
+        </div>
 
     <!-- Socket.IO 客户端脚本 -->
     <script>
@@ -531,20 +593,118 @@
                 this.socket = null;
                 this.isConnected = false;
                 this.reconnectAttempts = 0;
-                this.maxReconnectAttempts = 5;
-                this.reconnectInterval = 3000;
                 this.heartbeatInterval = null;
                 
-                // 服务器配置
-                this.serverUrls = [
-                    'http://localhost:3000',
-                    'http://127.0.0.1:3000',
-                    'https://39381-production.up.railway.app'
-                ];
+                // 默认服务器配置
+                this.defaultConfig = {
+                    serverUrl: 'http://localhost:3000',
+                    connectionTimeout: 10000,
+                    maxReconnectAttempts: 5,
+                    reconnectInterval: 3000,
+                    enableBackupServers: true,
+                    backupServers: [
+                        'http://127.0.0.1:3000',
+                        'https://39381-production.up.railway.app'
+                    ]
+                };
+                
+                // 当前配置
+                this.config = this.loadSettings();
                 
                 this.currentServerIndex = 0;
                 this.userInfo = null;
                 this.currentRoom = null;
+            }
+
+            // 加载设置
+            loadSettings() {
+                try {
+                    const saved = localStorage.getItem('werewolf_server_settings');
+                    if (saved) {
+                        const parsed = JSON.parse(saved);
+                        return { ...this.defaultConfig, ...parsed };
+                    }
+                } catch (error) {
+                    console.error('加载设置失败:', error);
+                }
+                return { ...this.defaultConfig };
+            }
+
+            // 保存设置
+            saveSettings(config) {
+                try {
+                    localStorage.setItem('werewolf_server_settings', JSON.stringify(config));
+                    this.config = { ...this.defaultConfig, ...config };
+                    return true;
+                } catch (error) {
+                    console.error('保存设置失败:', error);
+                    return false;
+                }
+            }
+
+            // 重置设置为默认
+            resetSettings() {
+                this.config = { ...this.defaultConfig };
+                try {
+                    localStorage.removeItem('werewolf_server_settings');
+                } catch (error) {
+                    console.error('重置设置失败:', error);
+                }
+                return this.config;
+            }
+
+            // 获取当前服务器配置
+            getCurrentConfig() {
+                return { ...this.config };
+            }
+
+            // 测试连接
+            async testConnection(serverUrl) {
+                try {
+                    const testSocket = io(serverUrl, {
+                        transports: ['websocket', 'polling'],
+                        timeout: 5000,
+                        forceNew: true
+                    });
+
+                    return new Promise((resolve) => {
+                        const timeout = setTimeout(() => {
+                            testSocket.disconnect();
+                            resolve({
+                                success: false,
+                                message: '连接超时',
+                                serverUrl: serverUrl
+                            });
+                        }, 5000);
+
+                        testSocket.on('connect', () => {
+                            clearTimeout(timeout);
+                            testSocket.disconnect();
+                            resolve({
+                                success: true,
+                                message: '连接成功',
+                                serverUrl: serverUrl,
+                                socketId: testSocket.id
+                            });
+                        });
+
+                        testSocket.on('connect_error', (error) => {
+                            clearTimeout(timeout);
+                            testSocket.disconnect();
+                            resolve({
+                                success: false,
+                                message: `连接失败: ${error.message}`,
+                                serverUrl: serverUrl
+                            });
+                        });
+                    });
+                } catch (error) {
+                    return {
+                        success: false,
+                        message: `测试失败: ${error.message}`,
+                        serverUrl: serverUrl
+                    };
+                }
             }
 
             // 初始化Socket连接
@@ -556,9 +716,9 @@
                 this.socket = io(serverUrl, {
                     transports: ['websocket', 'polling'],
                     reconnection: true,
-                    reconnectionAttempts: this.maxReconnectAttempts,
-                    reconnectionDelay: this.reconnectInterval,
-                    timeout: 10000,
+                    reconnectionAttempts: this.config.maxReconnectAttempts,
+                    reconnectionDelay: this.config.reconnectInterval,
+                    timeout: this.config.connectionTimeout,
                     forceNew: true
                 });
 
@@ -567,14 +727,44 @@
 
             // 获取当前服务器URL
             getCurrentServerUrl() {
-                // 优先使用本地开发服务器
-                if (window.location.hostname === 'localhost' || 
-                    window.location.hostname === '127.0.0.1') {
-                    return this.serverUrls[0];
+                // 优先使用用户设置的服务器
+                if (this.config.serverUrl) {
+                    return this.config.serverUrl;
                 }
                 
-                // 生产环境使用Railway服务器
-                return this.serverUrls[2];
+                // 备用服务器逻辑
+                if (this.config.enableBackupServers && this.config.backupServers.length > 0) {
+                    // 优先使用本地开发服务器
+                    if (window.location.hostname === 'localhost' || 
+                        window.location.hostname === '127.0.0.1') {
+                        return this.config.backupServers[0] || this.defaultConfig.serverUrl;
+                    }
+                    
+                    // 生产环境使用最后一个备用服务器
+                    return this.config.backupServers[this.config.backupServers.length - 1] || this.defaultConfig.serverUrl;
+                }
+                
+                return this.defaultConfig.serverUrl;
+            }
+
+            // 获取所有可用的服务器URL
+            getAllServerUrls() {
+                const urls = [];
+                
+                if (this.config.serverUrl) {
+                    urls.push(this.config.serverUrl);
+                }
+                
+                if (this.config.enableBackupServers) {
+                    urls.push(...this.config.backupServers);
+                }
+                
+                // 确保至少有一个服务器
+                if (urls.length === 0) {
+                    urls.push(this.defaultConfig.serverUrl);
+                }
+                
+                return [...new Set(urls)]; // 去重
             }
 
             // 设置事件监听器
@@ -668,8 +858,11 @@
 
             // 切换到备用服务器
             switchToBackupServer() {
-                this.currentServerIndex = (this.currentServerIndex + 1) % this.serverUrls.length;
-                console.log(`切换到备用服务器: ${this.getCurrentServerUrl()}`);
+                const allUrls = this.getAllServerUrls();
+                this.currentServerIndex = (this.currentServerIndex + 1) % allUrls.length;
+                
+                const newServerUrl = allUrls[this.currentServerIndex];
+                console.log(`切换到备用服务器: ${newServerUrl} (${this.currentServerIndex + 1}/${allUrls.length})`);
                 
                 // 延迟重连，避免频繁切换
                 setTimeout(() => {
@@ -1148,6 +1341,9 @@
             
             // 设置页面事件监听器
             setupEventListeners();
+            
+            // 初始化设置面板
+            initializeSettingsPanel();
         });
 
         // 设置页面事件监听器
@@ -1275,6 +1471,172 @@
             if (message && socketManager.isConnected) {
                 socketManager.sendChatMessage(message);
                 chatInput.value = '';
+            }
+        }
+
+        // 初始化设置面板
+        function initializeSettingsPanel() {
+            // 加载当前设置到表单
+            const config = socketManager.getCurrentConfig();
+            
+            document.getElementById('server-url').value = config.serverUrl || '';
+            document.getElementById('connection-timeout').value = config.connectionTimeout / 1000;
+            document.getElementById('reconnect-attempts').value = config.maxReconnectAttempts;
+            document.getElementById('reconnect-interval').value = config.reconnectInterval;
+            document.getElementById('enable-backup-servers').checked = config.enableBackupServers;
+            
+            // 设置按钮事件
+            document.getElementById('btn-settings').addEventListener('click', showSettingsModal);
+            document.getElementById('btn-settings-mobile').addEventListener('click', showSettingsModal);
+            document.getElementById('btn-close-settings').addEventListener('click', hideSettingsModal);
+            document.getElementById('btn-test-connection').addEventListener('click', testConnection);
+            document.getElementById('btn-reset-settings').addEventListener('click', resetSettings);
+            
+            // 设置表单提交
+            document.getElementById('server-settings-form').addEventListener('submit', saveSettings);
+        }
+
+        // 显示设置模态框
+        function showSettingsModal() {
+            const modal = document.getElementById('settings-modal');
+            modal.classList.remove('hidden');
+            
+            // 加载当前设置
+            const config = socketManager.getCurrentConfig();
+            document.getElementById('server-url').value = config.serverUrl || '';
+            document.getElementById('connection-timeout').value = config.connectionTimeout / 1000;
+            document.getElementById('reconnect-attempts').value = config.maxReconnectAttempts;
+            document.getElementById('reconnect-interval').value = config.reconnectInterval;
+            document.getElementById('enable-backup-servers').checked = config.enableBackupServers;
+        }
+
+        // 隐藏设置模态框
+        function hideSettingsModal() {
+            const modal = document.getElementById('settings-modal');
+            modal.classList.add('hidden');
+            
+            // 隐藏测试结果
+            const testResult = document.getElementById('connection-test-result');
+            testResult.classList.add('hidden');
+        }
+
+        // 保存设置
+        function saveSettings(e) {
+            e.preventDefault();
+            
+            const config = {
+                serverUrl: document.getElementById('server-url').value.trim(),
+                connectionTimeout: parseInt(document.getElementById('connection-timeout').value) * 1000,
+                maxReconnectAttempts: parseInt(document.getElementById('reconnect-attempts').value),
+                reconnectInterval: parseInt(document.getElementById('reconnect-interval').value),
+                enableBackupServers: document.getElementById('enable-backup-servers').checked
+            };
+            
+            // 验证服务器URL
+            if (!config.serverUrl) {
+                socketManager.showNotification('error', '保存失败', '请输入服务器地址');
+                return;
+            }
+            
+            if (!config.serverUrl.startsWith('http://') && !config.serverUrl.startsWith('https://')) {
+                socketManager.showNotification('error', '保存失败', '服务器地址必须以 http:// 或 https:// 开头');
+                return;
+            }
+            
+            if (socketManager.saveSettings(config)) {
+                socketManager.showNotification('success', '保存成功', '设置已保存，重新连接中...');
+                
+                // 重新连接
+                setTimeout(() => {
+                    if (socketManager.socket) {
+                        socketManager.socket.disconnect();
+                    }
+                    socketManager.init();
+                }, 1000);
+                
+                hideSettingsModal();
+            } else {
+                socketManager.showNotification('error', '保存失败', '设置保存失败，请重试');
+            }
+        }
+
+        // 测试连接
+        async function testConnection() {
+            const serverUrl = document.getElementById('server-url').value.trim();
+            
+            if (!serverUrl) {
+                socketManager.showNotification('error', '测试失败', '请输入服务器地址');
+                return;
+            }
+            
+            if (!serverUrl.startsWith('http://') && !serverUrl.startsWith('https://')) {
+                socketManager.showNotification('error', '测试失败', '服务器地址必须以 http:// 或 https:// 开头');
+                return;
+            }
+            
+            const testButton = document.getElementById('btn-test-connection');
+            const originalText = testButton.innerHTML;
+            
+            // 显示测试中状态
+            testButton.disabled = true;
+            testButton.innerHTML = '<i class="fa fa-spinner fa-spin mr-2"></i>测试中...';
+            
+            try {
+                const result = await socketManager.testConnection(serverUrl);
+                
+                // 显示测试结果
+                const testResult = document.getElementById('connection-test-result');
+                const resultContent = document.getElementById('test-result-content');
+                
+                testResult.classList.remove('hidden');
+                
+                if (result.success) {
+                    testResult.className = 'mt-4 p-3 bg-success bg-opacity-20 border-l-4 border-success rounded-lg';
+                    resultContent.innerHTML = `
+                        <p><strong>✅ 连接成功</strong></p>
+                        <p>服务器: ${result.serverUrl}</p>
+                        <p>Socket ID: ${result.socketId}</p>
+                        <p>消息: ${result.message}</p>
+                    `;
+                } else {
+                    testResult.className = 'mt-4 p-3 bg-error bg-opacity-20 border-l-4 border-error rounded-lg';
+                    resultContent.innerHTML = `
+                        <p><strong>❌ 连接失败</strong></p>
+                        <p>服务器: ${result.serverUrl}</p>
+                        <p>错误: ${result.message}</p>
+                        <p class="text-xs mt-2">请检查服务器地址是否正确，确保服务器正在运行</p>
+                    `;
+                }
+            } catch (error) {
+                socketManager.showNotification('error', '测试错误', '测试过程中发生错误');
+            } finally {
+                // 恢复按钮状态
+                testButton.disabled = false;
+                testButton.innerHTML = originalText;
+            }
+        }
+
+        // 重置设置
+        function resetSettings() {
+            if (confirm('确定要重置所有设置为默认值吗？')) {
+                const defaultConfig = socketManager.resetSettings();
+                
+                // 更新表单
+                document.getElementById('server-url').value = defaultConfig.serverUrl;
+                document.getElementById('connection-timeout').value = defaultConfig.connectionTimeout / 1000;
+                document.getElementById('reconnect-attempts').value = defaultConfig.maxReconnectAttempts;
+                document.getElementById('reconnect-interval').value = defaultConfig.reconnectInterval;
+                document.getElementById('enable-backup-servers').checked = defaultConfig.enableBackupServers;
+                
+                socketManager.showNotification('success', '重置成功', '设置已重置为默认值，重新连接中...');
+                
+                // 重新连接
+                setTimeout(() => {
+                    if (socketManager.socket) {
+                        socketManager.socket.disconnect();
+                    }
+                    socketManager.init();
+                }, 1000);
             }
         }
     </script>
