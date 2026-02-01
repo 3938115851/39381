@@ -7,7 +7,6 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>狼人杀 - 多人在线推理游戏</title>
-    
     <!-- Socket.IO Client -->
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     
@@ -86,7 +85,6 @@
             }
         }
     </script>
-    
     <style type="text/tailwindcss">
         @layer utilities {
             .text-shadow {
@@ -172,37 +170,9 @@
                 stroke-linecap: round;
                 fill: none;
             }
-            .connection-status {
-                @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium;
-            }
-            .connection-status.connected {
-                @apply bg-success text-white;
-            }
-            .connection-status.connecting {
-                @apply bg-warning text-white;
-            }
-            .connection-status.disconnected {
-                @apply bg-error text-white;
-            }
-            .notification {
-                @apply fixed top-4 right-4 z-50 max-w-sm w-full bg-white shadow-lg rounded-lg p-4 transform transition-all duration-300;
-            }
-            .notification.success {
-                @apply border-l-4 border-success;
-            }
-            .notification.error {
-                @apply border-l-4 border-error;
-            }
-            .notification.warning {
-                @apply border-l-4 border-warning;
-            }
-            .notification.info {
-                @apply border-l-4 border-info;
-            }
         }
     </style>
 </head>
-
 <body class="bg-primary min-h-screen font-sans text-light overflow-x-hidden">
     <!-- 背景图 -->
     <div class="fixed inset-0 bg-wolf-pattern bg-cover bg-center opacity-20 z-0"></div>
@@ -239,176 +209,581 @@
                 </button>
             </div>
         </header>
-
+        
         <!-- 移动端菜单 -->
         <div id="mobile-menu" class="hidden fixed inset-0 bg-black bg-opacity-90 z-50 flex flex-col items-center justify-center">
             <button id="btn-close-mobile-menu" class="absolute top-6 right-6 text-white text-2xl">
                 <i class="fa fa-times"></i>
             </button>
-            <div class="space-y-6 text-center">
-                <button id="btn-rules-mobile" class="block text-2xl text-white hover:text-accent transition-colors">
-                    <i class="fa fa-book mr-3"></i>游戏规则
+            <div class="flex flex-col items-center space-y-6 text-xl">
+                <button class="mobile-menu-btn text-gray-300 hover:text-white transition-colors" data-target="rules">
+                    <i class="fa fa-book mr-2"></i>游戏规则
                 </button>
-                <button id="btn-help-mobile" class="block text-2xl text-white hover:text-accent transition-colors">
-                    <i class="fa fa-question-circle mr-3"></i>帮助
+                <button class="mobile-menu-btn text-gray-300 hover:text-white transition-colors" data-target="help">
+                    <i class="fa fa-question-circle mr-2"></i>帮助
                 </button>
-                <button id="btn-settings-mobile" class="block text-2xl text-white hover:text-accent transition-colors">
-                    <i class="fa fa-cog mr-3"></i>设置
+                <button class="mobile-menu-btn text-gray-300 hover:text-white transition-colors" data-target="settings">
+                    <i class="fa fa-cog mr-2"></i>设置
                 </button>
-                <button id="btn-server-status-mobile" class="block text-2xl text-white hover:text-accent transition-colors">
-                    <i class="fa fa-server mr-3"></i>服务器状态
+                <button class="mobile-menu-btn text-gray-300 hover:text-white transition-colors" data-target="server-status">
+                    <i class="fa fa-server mr-2"></i>服务器状态
                 </button>
             </div>
         </div>
-
-        <!-- 主内容区域 -->
-        <main class="flex-1 container mx-auto px-4 py-8">
-            <!-- 首页 -->
-            <div id="home-page" class="fade-in">
-                <div class="max-w-4xl mx-auto text-center">
-                    <div class="mb-8">
-                        <h2 class="text-4xl md:text-6xl font-bold text-shadow-lg mb-4">狼人杀</h2>
-                        <p class="text-xl md:text-2xl text-gray-300 mb-8">多人在线推理游戏</p>
-                        <div class="flex flex-col md:flex-row justify-center space-y-4 md:space-y-0 md:space-x-6">
-                            <button id="btn-create-room" class="btn-primary">
-                                <i class="fa fa-plus mr-2"></i>创建房间
+        
+        <!-- 主内容区 -->
+        <main class="flex-grow container mx-auto px-4 py-8">
+            <!-- 欢迎页面 -->
+            <section id="welcome-section" class="flex flex-col items-center justify-center min-h-[70vh] animate-fade-in">
+                <div class="text-center mb-12">
+                    <h2 class="text-4xl md:text-5xl font-bold mb-4 text-shadow-lg animate-slide-down">欢迎来到狼人杀</h2>
+                    <p class="text-xl text-gray-300 max-w-2xl mx-auto animate-slide-up">
+                        一场智慧与谎言的对决，在这个神秘的村庄里，你能分辨出谁是狼人吗？
+                    </p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-3xl">
+                    <button id="btn-create-room" class="btn-primary flex flex-col items-center justify-center p-8 h-48">
+                        <i class="fa fa-plus-circle text-4xl mb-4"></i>
+                        <span class="text-xl">创建房间</span>
+                    </button>
+                    <button id="btn-join-room" class="btn-secondary flex flex-col items-center justify-center p-8 h-48">
+                        <i class="fa fa-sign-in text-4xl mb-4"></i>
+                        <span class="text-xl">加入房间</span>
+                    </button>
+                </div>
+                
+                <!-- 服务器状态卡片 -->
+                <div id="server-status-card" class="card-glass max-w-md mx-auto mb-8 hidden">
+                    <h3 class="text-xl font-bold mb-4">服务器状态</h3>
+                    <div class="space-y-2 text-left">
+                        <div class="flex justify-between">
+                            <span>连接状态:</span>
+                            <span id="server-connection-status" class="font-bold">-</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>活跃房间:</span>
+                            <span id="server-rooms-count" class="font-bold">-</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>在线玩家:</span>
+                            <span id="server-players-count" class="font-bold">-</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>服务器时间:</span>
+                            <span id="server-time" class="font-bold">-</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 最近房间 -->
+                <div id="recent-rooms" class="mt-12 w-full max-w-3xl">
+                    <h3 class="text-2xl font-bold mb-4 text-center">最近加入的房间</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                        <!-- 最近房间会通过JS动态添加 -->
+                    </div>
+                </div>
+            </section>
+            
+            <!-- 创建房间页面 -->
+            <section id="create-room-section" class="hidden animate-fade-in">
+                <div class="max-w-2xl mx-auto">
+                    <div class="flex items-center mb-6">
+                        <button class="btn-back mr-4 text-gray-300 hover:text-white">
+                            <i class="fa fa-arrow-left text-xl"></i>
+                        </button>
+                        <h2 class="text-3xl font-bold">创建房间</h2>
+                    </div>
+                    
+                    <div class="card-glass">
+                        <form id="create-room-form">
+                            <div class="mb-6">
+                                <label for="room-name" class="block text-lg font-medium mb-2">房间名称</label>
+                                <input type="text" id="room-name" class="input-primary w-full" placeholder="输入房间名称" required>
+                            </div>
+                            
+                            <div class="mb-6">
+                                <label for="player-count" class="block text-lg font-medium mb-2">游戏人数</label>
+                                <select id="player-count" class="input-primary w-full">
+                                    <option value="6">6人局</option>
+                                    <option value="7">7人局</option>
+                                    <option value="8">8人局</option>
+                                    <option value="9">9人局</option>
+                                    <option value="10">10人局</option>
+                                    <option value="11">11人局</option>
+                                    <option value="12">12人局</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-6">
+                                <label for="room-password" class="block text-lg font-medium mb-2">房间密码 (可选)</label>
+                                <input type="password" id="room-password" class="input-primary w-full" placeholder="设置房间密码">
+                            </div>
+                            
+                            <div class="btn-group">
+                                <button type="submit" class="btn-primary w-full">
+                                    <i class="fa fa-plus mr-2"></i>创建房间
+                                </button>
+                                <button type="button" id="btn-back-home" class="btn-outline w-full">
+                                    <i class="fa fa-arrow-left mr-2"></i>返回首页
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- 加入房间页面 -->
+            <section id="join-room-section" class="hidden animate-fade-in">
+                <div class="max-w-2xl mx-auto">
+                    <div class="flex items-center mb-6">
+                        <button class="btn-back mr-4 text-gray-300 hover:text-white">
+                            <i class="fa fa-arrow-left text-xl"></i>
+                        </button>
+                        <h2 class="text-3xl font-bold">加入房间</h2>
+                    </div>
+                    
+                    <div class="card-glass">
+                        <form id="join-room-form">
+                            <div class="mb-6">
+                                <label for="join-room-id" class="block text-lg font-medium mb-2">房间号</label>
+                                <input type="text" id="join-room-id" class="input-primary w-full" placeholder="请输入6位房间号" required maxlength="6">
+                            </div>
+                            <div class="mb-6">
+                                <label for="join-room-password" class="block text-lg font-medium mb-2">房间密码</label>
+                                <input type="password" id="join-room-password" class="input-primary w-full" placeholder="如房间有密码，请在此输入">
+                            </div>
+                            <div class="mb-6">
+                                <label for="player-name" class="block text-lg font-medium mb-2">玩家昵称</label>
+                                <input type="text" id="player-name" class="input-primary w-full" placeholder="请输入您的昵称" required>
+                            </div>
+                            <div class="btn-group">
+                                <button type="submit" class="btn-primary w-full">
+                                    <i class="fa fa-sign-in mr-2"></i>加入房间
+                                </button>
+                                <button type="button" id="btn-back-home-join" class="btn-outline w-full">
+                                    <i class="fa fa-arrow-left mr-2"></i>返回首页
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <!-- 最近房间 -->
+                    <div id="quick-join-section" class="mt-8">
+                        <h3 class="text-xl font-bold mb-4">快速加入</h3>
+                        <div id="quick-join-list" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <!-- 快速加入房间会通过JS动态添加 -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- 房间等待页面 -->
+            <section id="room-waiting-section" class="hidden animate-fade-in">
+                <div class="max-w-4xl mx-auto">
+                    <div class="flex items-center justify-between mb-6">
+                        <div class="flex items-center">
+                            <button class="btn-back mr-4 text-gray-300 hover:text-white">
+                                <i class="fa fa-arrow-left text-xl"></i>
                             </button>
-                            <button id="btn-join-room" class="btn-secondary">
-                                <i class="fa fa-sign-in mr-2"></i>加入房间
-                            </button>
-                            <button id="btn-quick-join" class="btn-outline">
-                                <i class="fa fa-bolt mr-2"></i>快速加入
+                            <h2 class="text-3xl font-bold">房间等待中</h2>
+                        </div>
+                        <div class="flex items-center">
+                            <span id="room-id-display" class="text-xl mr-4 bg-dark px-3 py-1 rounded">房间号: 123456</span>
+                            <button id="btn-copy-room-id" class="text-gray-300 hover:text-white">
+                                <i class="fa fa-copy text-xl"></i>
                             </button>
                         </div>
                     </div>
                     
-                    <!-- 服务器状态卡片 -->
-                    <div id="server-status-card" class="card-glass max-w-md mx-auto mb-8 hidden">
-                        <h3 class="text-xl font-bold mb-4">服务器状态</h3>
-                        <div class="space-y-2 text-left">
-                            <div class="flex justify-between">
-                                <span>连接状态:</span>
-                                <span id="server-connection-status" class="font-bold">-</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span>活跃房间:</span>
-                                <span id="server-rooms-count" class="font-bold">-</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span>在线玩家:</span>
-                                <span id="server-players-count" class="font-bold">-</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span>服务器时间:</span>
-                                <span id="server-time" class="font-bold">-</span>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <!-- 玩家列表 -->
+                        <div class="md:col-span-2">
+                            <div class="card-glass h-full">
+                                <h3 class="text-xl font-bold mb-4">玩家列表</h3>
+                                <div id="player-list" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                                    <!-- 玩家会通过JS动态添加 -->
+                                </div>
+                                
+                                <div class="mt-6">
+                                    <h4 class="text-lg font-medium mb-2">房间设置</h4>
+                                    <div id="room-settings" class="text-gray-300">
+                                        <!-- 房间设置会通过JS动态添加 -->
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-
-                    <!-- 游戏特色 -->
-                    <div class="grid md:grid-cols-3 gap-6 mt-12">
-                        <div class="card text-center">
-                            <i class="fa fa-users text-4xl text-accent mb-4"></i>
-                            <h3 class="text-xl font-bold mb-2">多人实时对战</h3>
-                            <p class="text-gray-300">支持6-12人同时在线游戏，体验真实的狼人杀乐趣</p>
-                        </div>
-                        <div class="card text-center">
-                            <i class="fa fa-shield text-4xl text-accent mb-4"></i>
-                            <h3 class="text-xl font-bold mb-2">完整角色系统</h3>
-                            <p class="text-gray-300">包含狼人、预言家、女巫、猎人、守卫、村民等经典角色</p>
-                        </div>
-                        <div class="card text-center">
-                            <i class="fa fa-mobile text-4xl text-accent mb-4"></i>
-                            <h3 class="text-xl font-bold mb-2">移动端优化</h3>
-                            <p class="text-gray-300">完美适配手机和平板设备，随时随地畅玩游戏</p>
+                        
+                        <!-- 操作面板 -->
+                        <div>
+                            <div class="card-glass h-full">
+                                <h3 class="text-xl font-bold mb-4">操作</h3>
+                                
+                                <div id="room-actions" class="space-y-4">
+                                    <!-- 房主操作 -->
+                                    <div id="host-actions" class="space-y-4">
+                                        <button id="btn-start-game" class="btn-primary w-full">开始游戏</button>
+                                        <button id="btn-edit-settings" class="btn-secondary w-full">修改设置</button>
+                                        <button id="btn-kick-player" class="btn-outline w-full">踢出玩家</button>
+                                    </div>
+                                    
+                                    <!-- 普通玩家操作 -->
+                                    <div id="player-actions" class="space-y-4 hidden">
+                                        <button id="btn-ready" class="btn-primary w-full">准备</button>
+                                        <button id="btn-leave-room" class="btn-outline w-full">离开房间</button>
+                                    </div>
+                                    
+                                    <!-- 等待中提示 -->
+                                    <div id="waiting-message" class="text-center text-gray-400 mt-8">
+                                        <p>等待房主开始游戏...</p>
+                                        <div class="mt-4 flex justify-center">
+                                            <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-accent"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-
-            <!-- 创建房间页面 -->
-            <div id="create-room-page" class="hidden">
-                <div class="max-w-md mx-auto">
-                    <div class="card">
-                        <h2 class="text-2xl font-bold mb-6 text-center">创建房间</h2>
-                        <form id="create-room-form">
-                            <div class="space-y-4">
-                                <div>
-                                    <label class="block text-sm font-medium mb-2">房间名称</label>
-                                    <input type="text" id="room-name" class="input-primary w-full" placeholder="请输入房间名称" required>
+            </section>
+            
+            <!-- 游戏页面 -->
+            <section id="game-section" class="hidden animate-fade-in">
+                <div class="max-w-6xl mx-auto">
+                    <!-- 游戏信息栏 -->
+                    <div class="card-glass mb-6">
+                        <div class="flex flex-wrap justify-between items-center">
+                            <div class="mb-4 md:mb-0">
+                                <h2 id="game-phase" class="text-2xl font-bold">夜晚</h2>
+                                <p id="phase-description" class="text-gray-300">狼人请睁眼，选择要击杀的目标</p>
+                            </div>
+                            
+                            <div class="flex items-center">
+                                <div class="mr-4">
+                                    <svg class="progress-ring w-16 h-16" viewBox="0 0 100 100">
+                                        <circle class="progress-ring-circle" stroke="#e94560" cx="50" cy="50" r="45"></circle>
+                                    </svg>
+                                    <div class="text-center -mt-12">
+                                        <span id="phase-timer" class="text-xl font-bold">60</span>
+                                        <span class="text-sm">秒</span>
+                                    </div>
                                 </div>
-                                <div>
-                                    <label class="block text-sm font-medium mb-2">房间密码</label>
-                                    <input type="password" id="room-password" class="input-primary w-full" placeholder="可选，设置房间密码">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium mb-2">玩家数量</label>
-                                    <select id="player-count" class="input-primary w-full">
-                                        <option value="6">6人局</option>
-                                        <option value="7">7人局</option>
-                                        <option value="8">8人局</option>
-                                        <option value="9">9人局</option>
-                                        <option value="10">10人局</option>
-                                        <option value="11">11人局</option>
-                                        <option value="12">12人局</option>
-                                    </select>
-                                </div>
-                                <div class="btn-group">
-                                    <button type="submit" class="btn-primary w-full">
-                                        <i class="fa fa-plus mr-2"></i>创建房间
-                                    </button>
-                                    <button type="button" id="btn-back-home" class="btn-outline w-full">
-                                        <i class="fa fa-arrow-left mr-2"></i>返回首页
-                                    </button>
+                                
+                                <button id="btn-game-menu" class="text-gray-300 hover:text-white">
+                                    <i class="fa fa-ellipsis-v text-2xl"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 角色区域 -->
+                    <div class="card-glass mb-6">
+                        <h3 class="text-xl font-bold mb-4">角色</h3>
+                        <div class="relative">
+                            <div id="game-characters" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4 overflow-x-auto scrollbar-hide pb-2" style="max-height: 200px;">
+                                <!-- 角色会通过JS动态添加 -->
+                            </div>
+                            <!-- 滑动提示 -->
+                            <div id="scroll-indicator" class="hidden absolute bottom-0 left-0 right-0 flex justify-center">
+                                <div class="bg-dark bg-opacity-80 px-4 py-2 rounded-full text-sm">
+                                    <i class="fa fa-hand-o-left mr-2"></i>左右滑动查看更多
                                 </div>
                             </div>
-                        </form>
+                        </div>
+                    </div>
+                    
+                    <!-- 信息区域 -->
+                    <div class="card-glass mb-6">
+                        <h3 class="text-xl font-bold mb-4">信息</h3>
+                        <div id="game-info" class="h-40 overflow-y-auto scrollbar-hide">
+                            <!-- 游戏信息会通过JS动态添加 -->
+                        </div>
+                    </div>
+                    
+                    <!-- 操作区域 -->
+                    <div class="card-glass">
+                        <h3 class="text-xl font-bold mb-4">操作</h3>
+                        <div id="game-actions" class="space-y-4">
+                            <!-- 游戏操作会通过JS动态添加 -->
+                        </div>
                     </div>
                 </div>
-            </div>
-
-            <!-- 加入房间页面 -->
-            <div id="join-room-page" class="hidden">
-                <div class="max-w-md mx-auto">
-                    <div class="card">
-                        <h2 class="text-2xl font-bold mb-6 text-center">加入房间</h2>
-                        <form id="join-room-form">
-                            <div class="space-y-4">
-                                <div>
-                                    <label class="block text-sm font-medium mb-2">房间号</label>
-                                    <input type="text" id="join-room-id" class="input-primary w-full" placeholder="请输入6位房间号" required maxlength="6">
+            </section>
+            
+            <!-- 游戏结束页面 -->
+            <section id="game-over-section" class="hidden animate-fade-in">
+                <div class="max-w-3xl mx-auto text-center">
+                    <div class="card-glass p-8">
+                        <h2 id="winner-title" class="text-4xl font-bold mb-6">狼人胜利！</h2>
+                        <p id="winner-description" class="text-xl text-gray-300 mb-8">狼人成功消灭了所有村民，村庄陷入了永恒的黑暗...</p>
+                        
+                        <div class="mb-8">
+                            <h3 class="text-2xl font-bold mb-4">角色身份</h3>
+                            <div id="role-reveal" class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                                <!-- 角色身份会通过JS动态添加 -->
+                            </div>
+                        </div>
+                        
+                        <div class="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
+                            <button id="btn-play-again" class="btn-primary">再来一局</button>
+                            <button id="btn-back-to-lobby" class="btn-secondary">返回大厅</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- 游戏规则页面 -->
+            <section id="rules-section" class="hidden animate-fade-in">
+                <div class="max-w-3xl mx-auto">
+                    <div class="flex items-center mb-6">
+                        <button class="btn-back mr-4 text-gray-300 hover:text-white">
+                            <i class="fa fa-arrow-left text-xl"></i>
+                        </button>
+                        <h2 class="text-3xl font-bold">游戏规则</h2>
+                    </div>
+                    
+                    <div class="card-glass">
+                        <div class="mb-6">
+                            <h3 class="text-2xl font-bold mb-4">基本规则</h3>
+                            <div class="space-y-4 text-gray-200">
+                                <p>狼人杀是一款多人参与的推理游戏，玩家将被分配不同的角色，通过发言、推理和投票来找出隐藏在村民中的狼人。</p>
+                                <p>游戏分为白天和夜晚两个阶段：</p>
+                                <ul class="list-disc pl-6 space-y-2">
+                                    <li><strong>夜晚</strong>：狼人可以击杀一名村民；特殊角色可以使用各自的能力。</li>
+                                    <li><strong>白天</strong>：所有玩家发言讨论，然后投票放逐一名玩家。</li>
+                                </ul>
+                                <p>游戏目标：</p>
+                                <ul class="list-disc pl-6 space-y-2">
+                                    <li><strong>狼人阵营</strong>：消灭所有村民或神职人员。</li>
+                                    <li><strong>好人阵营</strong>：找出并放逐所有狼人。</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-6">
+                            <h3 class="text-2xl font-bold mb-4">角色介绍</h3>
+                            <div class="space-y-6">
+                                <!-- 狼人 -->
+                                <div class="role-info">
+                                    <div class="flex items-center mb-2">
+                                        <img src="https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/bc096f4d5db648f4aecc4288be43be11~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=202601291526017A1DD3BB98925F226B5E&rrcfp=f06b921b&x-expires=1772263608&x-signature=6nAyoNf2BQJgYh7OydvY5av2x%2FM%3D" alt="狼人" class="w-12 h-12 rounded-full mr-3 border-2 border-wolf">
+                                        <h4 class="text-xl font-bold text-wolf">狼人</h4>
+                                    </div>
+                                    <p class="text-gray-300 pl-16">每晚可以击杀一名玩家。狼人之间可以互相确认身份，并在夜晚进行交流。</p>
                                 </div>
-                                <div>
-                                    <label class="block text-sm font-medium mb-2">房间密码</label>
-                                    <input type="password" id="join-room-password" class="input-primary w-full" placeholder="如房间有密码，请在此输入">
+                                
+                                <!-- 预言家 -->
+                                <div class="role-info">
+                                    <div class="flex items-center mb-2">
+                                        <img src="https://p9-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/c417f3f0d81044379454ab5f45ba0ba2~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=202601291526017A1DD3BB98925F226B5E&rrcfp=f06b921b&x-expires=1772263607&x-signature=eSh%2FRAqtVBFVJDS4K2LyWut95To%3D" alt="预言家" class="w-12 h-12 rounded-full mr-3 border-2 border-seer">
+                                        <h4 class="text-xl font-bold text-seer">预言家</h4>
+                                    </div>
+                                    <p class="text-gray-300 pl-16">每晚可以查验一名玩家的身份，得知其是好人还是狼人。</p>
                                 </div>
-                                <div>
-                                    <label class="block text-sm font-medium mb-2">玩家昵称</label>
-                                    <input type="text" id="player-name" class="input-primary w-full" placeholder="请输入您的昵称" required>
+                                
+                                <!-- 女巫 -->
+                                <div class="role-info">
+                                    <div class="flex items-center mb-2">
+                                        <img src="https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/e42ce82e7ac748728ca91e314357f907~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=202601291526017A1DD3BB98925F226B5E&rrcfp=f06b921b&x-expires=1772263607&x-signature=Kh199rKJIk06Jwu%2FJCJGIRNcxqQ%3D" alt="女巫" class="w-12 h-12 rounded-full mr-3 border-2 border-witch">
+                                        <h4 class="text-xl font-bold text-witch">女巫</h4>
+                                    </div>
+                                    <p class="text-gray-300 pl-16">拥有一瓶解药和一瓶毒药。解药可以救起被狼人击杀的玩家；毒药可以毒死任意一名玩家。每瓶药只能使用一次。</p>
                                 </div>
-                                <div class="btn-group">
-                                    <button type="submit" class="btn-primary w-full">
-                                        <i class="fa fa-sign-in mr-2"></i>加入房间
-                                    </button>
-                                    <button type="button" id="btn-back-home-join" class="btn-outline w-full">
-                                        <i class="fa fa-arrow-left mr-2"></i>返回首页
-                                    </button>
+                                
+                                <!-- 猎人 -->
+                                <div class="role-info">
+                                    <div class="flex items-center mb-2">
+                                        <img src="https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/648da048388949759ec0d086f3abfdc3~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=202601291526017A1DD3BB98925F226B5E&rrcfp=f06b921b&x-expires=1772263608&x-signature=of%2FRukV%2FYKfPzghqeCqFF6JaB3Q%3D" alt="猎人" class="w-12 h-12 rounded-full mr-3 border-2 border-hunter">
+                                        <h4 class="text-xl font-bold text-hunter">猎人</h4>
+                                    </div>
+                                    <p class="text-gray-300 pl-16">当猎人被狼人击杀或被村民放逐时，可以开枪带走一名玩家。但被女巫毒死时，不能开枪。</p>
+                                </div>
+                                
+                                <!-- 守卫 -->
+                                <div class="role-info">
+                                    <div class="flex items-center mb-2">
+                                        <img src="https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/f722fc838e3e46f5ab9d8d99f0bd0574~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=202601291526017A1DD3BB98925F226B5E&rrcfp=f06b921b&x-expires=1772263607&x-signature=0G8DHkgjGrJRTus%2BDlVA85tc%2Fr8%3D" alt="守卫" class="w-12 h-12 rounded-full mr-3 border-2 border-guard">
+                                        <h4 class="text-xl font-bold text-guard">守卫</h4>
+                                    </div>
+                                    <p class="text-gray-300 pl-16">每晚可以守护一名玩家，使其免受狼人的攻击。但不能连续两晚守护同一个人。</p>
+                                </div>
+                                
+                                <!-- 村民 -->
+                                <div class="role-info">
+                                    <div class="flex items-center mb-2">
+                                        <img src="https://p9-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/f542fdaab9214c889a0ae4b9ce546340~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=202601291526017A1DD3BB98925F226B5E&rrcfp=f06b921b&x-expires=1772263608&x-signature=nVpjqnY2FI4mrhF3ce8Fy2MSMl8%3D" alt="村民" class="w-12 h-12 rounded-full mr-3 border-2 border-villager">
+                                        <h4 class="text-xl font-bold text-villager">村民</h4>
+                                    </div>
+                                    <p class="text-gray-300 pl-16">没有特殊能力，但可以通过发言和投票来找出狼人。</p>
                                 </div>
                             </div>
-                        </form>
+                        </div>
                     </div>
                 </div>
-            </div>
-
+            </section>
+            
+            <!-- 帮助页面 -->
+            <section id="help-section" class="hidden animate-fade-in">
+                <div class="max-w-3xl mx-auto">
+                    <div class="flex items-center mb-6">
+                        <button class="btn-back mr-4 text-gray-300 hover:text-white">
+                            <i class="fa fa-arrow-left text-xl"></i>
+                        </button>
+                        <h2 class="text-3xl font-bold">帮助中心</h2>
+                    </div>
+                    
+                    <div class="card-glass">
+                        <div class="space-y-6">
+                            <div>
+                                <h3 class="text-xl font-bold mb-2">如何开始游戏？</h3>
+                                <p class="text-gray-300">点击"创建房间"按钮，设置房间名称和人数，然后等待其他玩家加入。当所有玩家准备就绪后，房主可以点击"开始游戏"按钮。</p>
+                            </div>
+                            
+                            <div>
+                                <h3 class="text-xl font-bold mb-2">如何加入房间？</h3>
+                                <p class="text-gray-300">点击"加入房间"按钮，输入房间号和密码（如果有），然后点击"加入房间"按钮。</p>
+                            </div>
+                            
+                            <div>
+                                <h3 class="text-xl font-bold mb-2">断线了怎么办？</h3>
+                                <p class="text-gray-300">如果您意外断开连接，可以重新打开游戏页面，系统会提示您是否回到之前的游戏。点击"回到游戏"按钮即可重新加入。</p>
+                            </div>
+                            
+                            <div>
+                                <h3 class="text-xl font-bold mb-2">如何发言？</h3>
+                                <p class="text-gray-300">在白天阶段，系统会按照顺序给予每个玩家发言的机会。轮到您发言时，可以在聊天框中输入文字进行发言。</p>
+                            </div>
+                            
+                            <div>
+                                <h3 class="text-xl font-bold mb-2">如何投票？</h3>
+                                <p class="text-gray-300">在投票阶段，点击您想要放逐的玩家头像即可完成投票。投票结束后，得票最多的玩家将被放逐。</p>
+                            </div>
+                            
+                            <div>
+                                <h3 class="text-xl font-bold mb-2">游戏卡住了怎么办？</h3>
+                                <p class="text-gray-300">如果游戏出现卡顿或无响应的情况，可以尝试刷新页面。如果问题仍然存在，请联系客服寻求帮助。</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- 设置页面 -->
+            <section id="settings-section" class="hidden animate-fade-in">
+                <div class="max-w-3xl mx-auto">
+                    <div class="flex items-center mb-6">
+                        <button class="btn-back mr-4 text-gray-300 hover:text-white">
+                            <i class="fa fa-arrow-left text-xl"></i>
+                        </button>
+                        <h2 class="text-3xl font-bold">设置</h2>
+                    </div>
+                    
+                    <div class="card-glass">
+                        <div class="space-y-6">
+                            <div>
+                                <h3 class="text-xl font-bold mb-4">音效设置</h3>
+                                <div class="flex items-center justify-between mb-4">
+                                    <span class="text-gray-300">游戏音效</span>
+                                    <label class="switch">
+                                        <input type="checkbox" id="sound-effects" checked>
+                                        <span class="slider round"></span>
+                                    </label>
+                                </div>
+                                <div class="flex items-center justify-between mb-4">
+                                    <span class="text-gray-300">震动反馈</span>
+                                    <label class="switch">
+                                        <input type="checkbox" id="vibration" checked>
+                                        <span class="slider round"></span>
+                                    </label>
+                                </div>
+                                <div class="mt-4">
+                                    <label for="sound-volume" class="block text-gray-300 mb-2">音量</label>
+                                    <input type="range" id="sound-volume" min="0" max="100" value="80" class="w-full">
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <h3 class="text-xl font-bold mb-4">显示设置</h3>
+                                <div class="flex items-center justify-between mb-4">
+                                    <span class="text-gray-300">深色模式</span>
+                                    <label class="switch">
+                                        <input type="checkbox" id="dark-mode" checked>
+                                        <span class="slider round"></span>
+                                    </label>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-gray-300">动画效果</span>
+                                    <label class="switch">
+                                        <input type="checkbox" id="animations" checked>
+                                        <span class="slider round"></span>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <h3 class="text-xl font-bold mb-4">账号设置</h3>
+                                <div class="mb-4">
+                                    <label for="username" class="block text-gray-300 mb-2">用户名</label>
+                                    <input type="text" id="username" class="input-primary w-full" placeholder="输入用户名">
+                                </div>
+                                <button id="btn-save-username" class="btn-primary">保存用户名</button>
+                            </div>
+                            
+                            <div>
+                                <h3 class="text-xl font-bold mb-4">其他设置</h3>
+                                <div class="flex items-center justify-between mb-4">
+                                    <span class="text-gray-300">自动重连</span>
+                                    <label class="switch">
+                                        <input type="checkbox" id="auto-reconnect" checked>
+                                        <span class="slider round"></span>
+                                    </label>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-gray-300">接收通知</span>
+                                    <label class="switch">
+                                        <input type="checkbox" id="notifications" checked>
+                                        <span class="slider round"></span>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="pt-4 border-t border-gray-700">
+                                <button id="btn-clear-cache" class="btn-outline w-full">清除缓存</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
             <!-- 房间页面 -->
             <div id="room-page" class="hidden">
                 <div class="max-w-4xl mx-auto">
+                    <!-- 房间号显示卡片 -->
+                    <div class="card mb-6 bg-gradient-to-r from-accent to-purple-600 text-white">
+                        <div class="flex flex-col md:flex-row justify-between items-center">
+                            <div class="text-center md:text-left mb-4 md:mb-0">
+                                <h2 class="text-xl font-bold">房间创建成功</h2>
+                                <p class="text-sm opacity-90">邀请好友加入游戏</p>
+                            </div>
+                            <div class="flex flex-col items-center md:items-end">
+                                <div class="flex items-center space-x-3 mb-2">
+                                    <span class="text-3xl font-bold tracking-wider" id="room-id-display">-</span>
+                                    <button id="btn-copy-room-id" class="btn-sm bg-white bg-opacity-20 hover:bg-opacity-30 text-white border-0">
+                                        <i class="fa fa-copy mr-1"></i>复制
+                                    </button>
+                                </div>
+                                <p class="text-xs opacity-80" id="room-name-display">房间名称: -</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 房间信息卡片 -->
                     <div class="card">
                         <div class="flex justify-between items-center mb-6">
-                            <h2 class="text-2xl font-bold" id="room-title">房间号: <span id="room-id-display">-</span></h2>
+                            <h2 class="text-2xl font-bold" id="room-title">房间管理</h2>
                             <div class="flex space-x-2">
-                                <button id="btn-copy-room-id" class="btn-sm">
-                                    <i class="fa fa-copy mr-1"></i>复制房间号
+                                <button id="btn-share-room" class="btn-sm bg-info">
+                                    <i class="fa fa-share-alt mr-1"></i>分享房间
                                 </button>
                                 <button id="btn-leave-room" class="btn-sm bg-error">
                                     <i class="fa fa-sign-out mr-1"></i>离开房间
@@ -509,16 +884,7 @@
             </div>
         </main>
 
-        <!-- 底部信息 -->
-        <footer class="bg-dark bg-opacity-80 py-4 mt-auto">
-            <div class="container mx-auto text-center text-gray-400">
-                <p>© 2024 狼人杀游戏 - 多人在线推理游戏</p>
-                <p class="text-sm mt-1">基于 Socket.IO 构建的实时多人游戏</p>
-            </div>
-        </footer>
-    </div>
-
-    <!-- 设置模态框 -->
+        <!-- 设置模态框 -->
         <div id="settings-modal" class="hidden fixed inset-0 bg-black bg-opacity-80 z-50 flex items-center justify-center">
             <div class="card max-w-md w-full mx-4">
                 <div class="flex justify-between items-center mb-6">
@@ -585,8 +951,2493 @@
             <!-- 各种模态框将通过JavaScript动态创建 -->
         </div>
 
-    <!-- Socket.IO 客户端脚本 -->
+        <!-- 底部信息 -->
+        <footer class="bg-dark bg-opacity-80 backdrop-blur-md py-4 px-6">
+            <div class="container mx-auto">
+                <div class="flex flex-col md:flex-row justify-between items-center">
+                    <div class="mb-4 md:mb-0">
+                        <p class="text-gray-400">&copy; 2025 狼人杀. 保留所有权利.</p>
+                    </div>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                            <i class="fa fa-weibo"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                            <i class="fa fa-wechat"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                            <i class="fa fa-github"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+    
+    <!-- 断线重连提示 -->
+    <div id="reconnect-modal" class="hidden fixed inset-0 bg-black bg-opacity-80 z-50 flex items-center justify-center">
+        <div class="card-glass p-8 max-w-md w-full">
+            <h3 class="text-2xl font-bold mb-4 text-center">连接已断开</h3>
+            <p class="text-gray-300 mb-6 text-center">您的网络连接已断开，正在尝试重新连接...</p>
+            <div class="flex justify-center mb-6">
+                <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-accent"></div>
+            </div>
+            <div class="flex space-x-4">
+                <button id="btn-reconnect" class="btn-primary flex-1">重新连接</button>
+                <button id="btn-leave-game" class="btn-outline flex-1">离开游戏</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 角色选择弹窗 -->
+    <div id="role-select-modal" class="hidden fixed inset-0 bg-black bg-opacity-80 z-50 flex items-center justify-center">
+        <div class="card-glass p-8 max-w-2xl w-full">
+            <h3 class="text-2xl font-bold mb-4 text-center">选择目标</h3>
+            <div id="role-select-list" class="grid grid-cols-3 sm:grid-cols-4 gap-4 mb-6">
+                <!-- 角色选择会通过JS动态添加 -->
+            </div>
+            <div class="flex justify-end">
+                <button id="btn-cancel-select" class="btn-outline">取消</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 聊天弹窗 -->
+    <div id="chat-modal" class="hidden fixed inset-0 bg-black bg-opacity-80 z-50 flex items-end justify-center">
+        <div class="card-glass w-full max-h-[80vh] flex flex-col">
+            <div class="flex justify-between items-center p-4 border-b border-gray-700">
+                <h3 class="text-xl font-bold">聊天</h3>
+                <button id="btn-close-chat" class="text-gray-400 hover:text-white">
+                    <i class="fa fa-times text-xl"></i>
+                </button>
+            </div>
+            <div id="chat-messages" class="flex-grow overflow-y-auto p-4 space-y-4">
+                <!-- 聊天消息会通过JS动态添加 -->
+            </div>
+            <div class="p-4 border-t border-gray-700">
+                <div class="flex">
+                    <input type="text" id="chat-input" class="input-primary flex-grow mr-4" placeholder="输入消息...">
+                    <button id="btn-send-chat" class="btn-primary">发送</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 通知提示 -->
+    <div id="notification" class="hidden fixed top-20 right-4 bg-dark bg-opacity-90 rounded-lg shadow-lg p-4 max-w-xs transform translate-x-full transition-transform duration-300 z-50">
+        <div class="flex items-start">
+            <div id="notification-icon" class="mr-3 text-xl">
+                <i class="fa fa-info-circle text-blue-500"></i>
+            </div>
+            <div class="flex-grow">
+                <h4 id="notification-title" class="font-bold">通知标题</h4>
+                <p id="notification-message" class="text-sm text-gray-300">通知内容</p>
+            </div>
+            <button id="btn-close-notification" class="text-gray-400 hover:text-white ml-4">
+                <i class="fa fa-times"></i>
+            </button>
+        </div>
+    </div>
+    
+    <!-- 自定义样式 -->
+    <style>
+        /* 开关样式 */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+        
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #374151;
+            transition: .4s;
+        }
+        
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+        }
+        
+        input:checked + .slider {
+            background-color: #e94560;
+        }
+        
+        input:focus + .slider {
+            box-shadow: 0 0 1px #e94560;
+        }
+        
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+        
+        .slider.round {
+            border-radius: 34px;
+        }
+        
+        .slider.round:before {
+            border-radius: 50%;
+        }
+        
+        /* 自定义滚动条 */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: rgba(233, 69, 96, 0.5);
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(233, 69, 96, 0.8);
+        }
+        
+        /* 确保输入框在iOS上正常显示 */
+        input[type="text"],
+        input[type="password"],
+        input[type="number"],
+        textarea {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+        }
+        
+        /* 防止iOS上的点击延迟 */
+        button,
+        a {
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        /* 适配刘海屏和底部安全区 */
+        @media screen and (display-mode: standalone) {
+            :root {
+                --safe-area-inset-top: env(safe-area-inset-top, 0px);
+                --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+                --safe-area-inset-left: env(safe-area-inset-left, 0px);
+                --safe-area-inset-right: env(safe-area-inset-right, 0px);
+            }
+            
+            header {
+                padding-top: calc(1rem + var(--safe-area-inset-top));
+                padding-left: calc(1rem + var(--safe-area-inset-left));
+                padding-right: calc(1rem + var(--safe-area-inset-right));
+            }
+            
+            footer {
+                padding-bottom: calc(1rem + var(--safe-area-inset-bottom));
+                padding-left: calc(1rem + var(--safe-area-inset-left));
+                padding-right: calc(1rem + var(--safe-area-inset-right));
+            }
+            
+            main {
+                padding-left: calc(1rem + var(--safe-area-inset-left));
+                padding-right: calc(1rem + var(--safe-area-inset-right));
+                padding-bottom: calc(1rem + var(--safe-area-inset-bottom));
+            }
+            
+            /* 底部操作按钮安全区 */
+            .bottom-actions {
+                padding-bottom: calc(1rem + var(--safe-area-inset-bottom));
+            }
+            
+            /* 聊天输入框安全区 */
+            #chat-input-container {
+                padding-bottom: calc(1rem + var(--safe-area-inset-bottom));
+            }
+        }
+        
+        /* 通用安全区适配 */
+        .safe-area-inset-top {
+            padding-top: env(safe-area-inset-top, 0px);
+        }
+        
+        .safe-area-inset-bottom {
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+        }
+        
+        .safe-area-inset-left {
+            padding-left: env(safe-area-inset-left, 0px);
+        }
+        
+        .safe-area-inset-right {
+            padding-right: env(safe-area-inset-right, 0px);
+        }
+        
+        .safe-area-inset-all {
+            padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+        }
+    </style>
+    
+    <!-- JavaScript -->
     <script>
+        // 全局变量
+        let currentSection = 'welcome-section';
+        let currentUser = {
+            id: generateUniqueId(),
+            name: localStorage.getItem('username') || '玩家' + Math.floor(Math.random() * 1000),
+            isHost: false,
+            isReady: false,
+            role: null,
+            isAlive: true
+        };
+        
+        // 用户设置
+        let userSettings = {
+            vibration: localStorage.getItem('vibration') !== 'false',
+            soundEffects: localStorage.getItem('soundEffects') !== 'false',
+            autoReconnect: localStorage.getItem('autoReconnect') !== 'false'
+        };
+        
+        let currentRoom = {
+            id: null,
+            name: null,
+            password: null,
+            playerCount: 6,
+            players: [],
+            roles: [],
+            isGameStarted: false,
+            currentPhase: null,
+            phaseTimer: null
+        };
+        
+        let gameState = {
+            phase: 'night', // night, day, vote
+            dayCount: 1,
+            currentAction: null,
+            votes: {},
+            lastGuard: null,
+            witchHealUsed: false,
+            witchPoisonUsed: false,
+            seerChecked: null,
+            wolfKilled: null
+        };
+        
+        // WebSocket连接
+        let ws = null;
+        const SERVER_URL = 'wss://39381-production.up.railway.app/';
+        
+        function connectWebSocket() {
+            try {
+                ws = new WebSocket(SERVER_URL);
+                
+                ws.onopen = function() {
+                    console.log('WebSocket连接已建立');
+                    ws.connected = true;
+                    hideReconnectModal();
+                    showNotification('success', '连接成功', '已成功连接到服务器');
+                };
+                
+                ws.onmessage = function(event) {
+                    console.log('收到服务器消息:', event.data);
+                    try {
+                        const data = JSON.parse(event.data);
+                        handleServerResponse(data);
+                    } catch (error) {
+                        console.error('解析服务器消息失败:', error);
+                    }
+                };
+                
+                ws.onclose = function() {
+                    console.log('WebSocket连接已关闭');
+                    ws.connected = false;
+                    if (userSettings.autoReconnect) {
+                        showReconnectModal();
+                        setTimeout(connectWebSocket, 3000);
+                    }
+                };
+                
+                ws.onerror = function(error) {
+                    console.error('WebSocket连接错误:', error);
+                    ws.connected = false;
+                };
+                
+                ws.send = function(data) {
+                    if (this.readyState === WebSocket.OPEN) {
+                        console.log('发送数据:', data);
+                        this.send(JSON.stringify(data));
+                    } else {
+                        console.error('WebSocket未连接，无法发送数据');
+                        showNotification('error', '连接失败', '服务器连接已断开，请检查网络');
+                        showReconnectModal();
+                    }
+                };
+                
+            } catch (error) {
+                console.error('创建WebSocket连接失败:', error);
+                ws = {
+                    connected: false,
+                    send: function(data) {
+                        console.log('发送数据:', data);
+                        // 模拟服务器响应
+                        setTimeout(() => {
+                            handleServerResponse(data);
+                        }, 500);
+                    },
+                    close: function() {
+                        this.connected = false;
+                        showReconnectModal();
+                    }
+                };
+                showNotification('warning', '连接提示', '使用模拟模式运行，部分功能可能受限');
+            }
+        }
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initApp();
+        });
+        
+        function initApp() {
+            // 加载用户设置
+            loadUserSettings();
+            
+            // 加载最近房间
+            loadRecentRooms();
+            
+            // 绑定事件
+            bindEvents();
+            
+            // 检查是否有未完成的游戏
+            checkForActiveGame();
+            
+            // 初始化角色配置
+            initRoleConfig();
+            
+            // 初始化震动反馈
+            initVibration();
+            
+            // 连接WebSocket
+            connectWebSocket();
+        }
+        
+        function bindEvents() {
+            // 导航按钮
+            document.getElementById('btn-create-room').addEventListener('click', showCreateRoomSection);
+            document.getElementById('btn-join-room').addEventListener('click', showJoinRoomSection);
+            document.getElementById('btn-rules').addEventListener('click', showRulesSection);
+            document.getElementById('btn-help').addEventListener('click', showHelpSection);
+            document.getElementById('btn-settings').addEventListener('click', showSettingsSection);
+            
+            // 移动端菜单
+            document.getElementById('btn-mobile-menu').addEventListener('click', toggleMobileMenu);
+            document.getElementById('btn-close-mobile-menu').addEventListener('click', toggleMobileMenu);
+            document.querySelectorAll('.mobile-menu-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const target = this.getAttribute('data-target');
+                    toggleMobileMenu();
+                    switch(target) {
+                        case 'rules':
+                            showRulesSection();
+                            break;
+                        case 'help':
+                            showHelpSection();
+                            break;
+                        case 'settings':
+                            showSettingsSection();
+                            break;
+                    }
+                });
+            });
+            
+            // 返回按钮
+            document.querySelectorAll('.btn-back').forEach(btn => {
+                btn.addEventListener('click', goBack);
+            });
+            
+            // 创建房间
+            document.getElementById('create-room-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                createRoom();
+            });
+            document.getElementById('btn-back-home').addEventListener('click', function() {
+                showSection('welcome-section');
+            });
+            
+            // 加入房间
+            document.getElementById('join-room-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                joinRoom();
+            });
+            document.getElementById('btn-back-home-join').addEventListener('click', function() {
+                showSection('welcome-section');
+            });
+            document.getElementById('btn-copy-room-id').addEventListener('click', copyRoomId);
+            
+            // 房间操作
+            document.getElementById('btn-start-game').addEventListener('click', startGame);
+            document.getElementById('btn-edit-settings').addEventListener('click', editSettings);
+            document.getElementById('btn-kick-player').addEventListener('click', kickPlayer);
+            document.getElementById('btn-ready').addEventListener('click', toggleReady);
+            document.getElementById('btn-leave-room').addEventListener('click', leaveRoom);
+            
+            // 游戏操作
+            document.getElementById('btn-game-menu').addEventListener('click', toggleGameMenu);
+            document.getElementById('btn-reconnect').addEventListener('click', reconnect);
+            document.getElementById('btn-leave-game').addEventListener('click', leaveGame);
+            
+            // 聊天
+            document.getElementById('btn-send-chat').addEventListener('click', sendChat);
+            document.getElementById('btn-close-chat').addEventListener('click', toggleChat);
+            
+            // 设置
+            document.getElementById('btn-save-username').addEventListener('click', saveUsername);
+            document.getElementById('btn-clear-cache').addEventListener('click', clearCache);
+            
+            // 通知
+            document.getElementById('btn-close-notification').addEventListener('click', hideNotification);
+            
+            // 角色选择
+            document.getElementById('btn-cancel-select').addEventListener('click', hideRoleSelectModal);
+        }
+        
+        // 页面导航
+        function showSection(sectionId) {
+            document.getElementById(currentSection).classList.add('hidden');
+            document.getElementById(sectionId).classList.remove('hidden');
+            currentSection = sectionId;
+            
+            // 滚动到顶部
+            window.scrollTo(0, 0);
+        }
+        
+        function showCreateRoomSection() {
+            showSection('create-room-section');
+        }
+        
+        function showJoinRoomSection() {
+            showSection('join-room-section');
+        }
+        
+        function showRoomWaitingSection() {
+            showSection('room-waiting-section');
+            updatePlayerList();
+            updateRoomSettings();
+            updateRoomActions();
+        }
+        
+        function showGameSection() {
+            showSection('game-section');
+            updateGamePhase();
+            updateGameCharacters();
+            updateGameActions();
+            startPhaseTimer(60);
+        }
+        
+        function showGameOverSection() {
+            showSection('game-over-section');
+            updateGameOverInfo();
+        }
+        
+        function showRulesSection() {
+            showSection('rules-section');
+        }
+        
+        function showHelpSection() {
+            showSection('help-section');
+        }
+        
+        function showSettingsSection() {
+            showSection('settings-section');
+        }
+        
+        function goBack() {
+            // 根据当前页面决定返回哪里
+            switch(currentSection) {
+                case 'create-room-section':
+                case 'join-room-section':
+                case 'rules-section':
+                case 'help-section':
+                case 'settings-section':
+                    showSection('welcome-section');
+                    break;
+                case 'room-waiting-section':
+                    if (confirm('确定要离开房间吗？')) {
+                        leaveRoom();
+                        showSection('welcome-section');
+                    }
+                    break;
+                case 'game-section':
+                    if (confirm('确定要离开游戏吗？这将被视为逃跑。')) {
+                        leaveGame();
+                        showSection('welcome-section');
+                    }
+                    break;
+                case 'game-over-section':
+                    showSection('welcome-section');
+                    break;
+            }
+        }
+        
+        function toggleMobileMenu() {
+            const mobileMenu = document.getElementById('mobile-menu');
+            mobileMenu.classList.toggle('hidden');
+        }
+        
+        // 房间管理
+        function createRoom() {
+            const roomName = document.getElementById('room-name').value || '未命名房间';
+            const roomPassword = document.getElementById('room-password').value;
+            const playerCount = parseInt(document.getElementById('player-count').value);
+            
+            // 创建房间数据
+            const roomData = {
+                name: roomName,
+                password: roomPassword || null,
+                playerCount: playerCount
+            };
+            
+            // 使用Socket.IO发送创建房间请求
+            socketManager.createRoom(roomData);
+        }
+        
+        function joinRoom() {
+            const roomId = document.getElementById('join-room-id').value;
+            const roomPassword = document.getElementById('join-room-password').value;
+            const playerName = document.getElementById('player-name').value || '玩家';
+            
+            if (!roomId || roomId.length !== 6) {
+                showNotification('error', '错误', '请输入有效的6位房间号');
+                return;
+            }
+            
+            if (!playerName.trim()) {
+                showNotification('error', '错误', '请输入玩家昵称');
+                return;
+            }
+            
+            // 创建加入数据
+            const joinData = {
+                roomId: roomId,
+                password: roomPassword || null,
+                username: playerName
+            };
+            
+            // 使用Socket.IO发送加入房间请求
+            socketManager.joinRoom(joinData);
+        }
+        
+        // 显示推荐房间
+        function showRecommendedRooms() {
+            const quickJoinSection = document.getElementById('quick-join-section');
+            if (!quickJoinSection) return;
+            
+            // 滚动到推荐房间区域
+            quickJoinSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            // 高亮显示推荐房间
+            const roomCards = quickJoinSection.querySelectorAll('.card-glass');
+            roomCards.forEach((card, index) => {
+                setTimeout(() => {
+                    card.classList.add('animate-pulse-slow');
+                    setTimeout(() => {
+                        card.classList.remove('animate-pulse-slow');
+                    }, 2000);
+                }, index * 300);
+            });
+        }
+        
+        function leaveRoom() {
+            // 使用Socket.IO发送离开房间请求
+            socketManager.leaveRoom();
+        }
+        
+        function startGame() {
+            // 使用Socket.IO发送开始游戏请求
+            socketManager.socket.emit('start_game', {
+                roomId: socketManager.currentRoom.id
+            });
+        }
+        
+        function leaveGame() {
+            // 模拟离开游戏请求
+            ws.send({
+                type: 'leave_game',
+                roomId: currentRoom.id,
+                userId: currentUser.id
+            });
+            
+            // 重置房间和游戏状态
+            currentRoom = {
+                id: null,
+                name: null,
+                password: null,
+                playerCount: 6,
+                players: [],
+                roles: [],
+                isGameStarted: false,
+                currentPhase: null,
+                phaseTimer: null
+            };
+            
+            gameState = {
+                phase: 'night',
+                dayCount: 1,
+                currentAction: null,
+                votes: {},
+                lastGuard: null,
+                witchHealUsed: false,
+                witchPoisonUsed: false,
+                seerChecked: null,
+                wolfKilled: null
+            };
+            
+            currentUser.isHost = false;
+            currentUser.isReady = false;
+            currentUser.role = null;
+            currentUser.isAlive = true;
+            
+            // 隐藏重连弹窗
+            hideReconnectModal();
+            
+            // 返回欢迎页面
+            showSection('welcome-section');
+        }
+        
+        // 游戏管理
+        function assignRoles() {
+            const roles = [...currentRoom.roles];
+            const players = [...currentRoom.players];
+            
+            // 随机打乱角色
+            shuffleArray(roles);
+            
+            // 分配角色给玩家
+            players.forEach((player, index) => {
+                player.role = roles[index];
+                player.isAlive = true;
+            });
+            
+            currentRoom.players = players;
+        }
+        
+        function updateGamePhase() {
+            const phaseElement = document.getElementById('game-phase');
+            const descriptionElement = document.getElementById('phase-description');
+            
+            switch(gameState.phase) {
+                case 'night':
+                    phaseElement.textContent = `夜晚 ${gameState.dayCount}`;
+                    
+                    switch(gameState.currentAction) {
+                        case 'wolf':
+                            descriptionElement.textContent = '狼人请睁眼，选择要击杀的目标';
+                            break;
+                        case 'seer':
+                            descriptionElement.textContent = '预言家请睁眼，选择要查验的玩家';
+                            break;
+                        case 'witch':
+                            descriptionElement.textContent = '女巫请睁眼，选择要使用的药水';
+                            break;
+                        case 'guard':
+                            descriptionElement.textContent = '守卫请睁眼，选择要守护的玩家';
+                            break;
+                    }
+                    break;
+                case 'day':
+                    phaseElement.textContent = `白天 ${gameState.dayCount}`;
+                    descriptionElement.textContent = '玩家发言讨论阶段';
+                    break;
+                case 'vote':
+                    phaseElement.textContent = `投票 ${gameState.dayCount}`;
+                    descriptionElement.textContent = '请投票放逐一名玩家';
+                    break;
+            }
+        }
+        
+        function updateGameCharacters() {
+            const charactersElement = document.getElementById('game-characters');
+            charactersElement.innerHTML = '';
+            
+            currentRoom.players.forEach(player => {
+                const characterDiv = document.createElement('div');
+                characterDiv.className = 'flex flex-col items-center cursor-pointer transition-all duration-300';
+                
+                let roleIcon = 'question';
+                let roleColor = 'gray';
+                let roleName = '未知';
+                
+                // 如果玩家已死亡，显示灰色
+                if (!player.isAlive) {
+                    characterDiv.classList.add('opacity-50');
+                }
+                
+                // 如果是白天或者玩家已死亡，显示真实角色
+                if (gameState.phase === 'day' || !player.isAlive || player.id === currentUser.id) {
+                    switch(player.role) {
+                        case 'wolf':
+                            roleIcon = 'wolf';
+                            roleColor = 'wolf';
+                            roleName = '狼人';
+                            break;
+                        case 'seer':
+                            roleIcon = 'seer';
+                            roleColor = 'seer';
+                            roleName = '预言家';
+                            break;
+                        case 'witch':
+                            roleIcon = 'witch';
+                            roleColor = 'witch';
+                            roleName = '女巫';
+                            break;
+                        case 'hunter':
+                            roleIcon = 'hunter';
+                            roleColor = 'hunter';
+                            roleName = '猎人';
+                            break;
+                        case 'guard':
+                            roleIcon = 'guard';
+                            roleColor = 'guard';
+                            roleName = '守卫';
+                            break;
+                        case 'villager':
+                            roleIcon = 'villager';
+                            roleColor = 'villager';
+                            roleName = '村民';
+                            break;
+                    }
+                }
+                
+                // 获取角色图片
+                const roleImages = {
+                    wolf: 'https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/bc096f4d5db648f4aecc4288be43be11~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=202601291526017A1DD3BB98925F226B5E&rrcfp=f06b921b&x-expires=1772263608&x-signature=6nAyoNf2BQJgYh7OydvY5av2x%2FM%3D',
+                    seer: 'https://p9-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/c417f3f0d81044379454ab5f45ba0ba2~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=202601291526017A1DD3BB98925F226B5E&rrcfp=f06b921b&x-expires=1772263607&x-signature=eSh%2FRAqtVBFVJDS4K2LyWut95To%3D',
+                    witch: 'https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/e42ce82e7ac748728ca91e314357f907~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=202601291526017A1DD3BB98925F226B5E&rrcfp=f06b921b&x-expires=1772263607&x-signature=Kh199rKJIk06Jwu%2FJCJGIRNcxqQ%3D',
+                    hunter: 'https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/648da048388949759ec0d086f3abfdc3~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=202601291526017A1DD3BB98925F226B5E&rrcfp=f06b921b&x-expires=1772263608&x-signature=of%2FRukV%2FYKfPzghqeCqFF6JaB3Q%3D',
+                    guard: 'https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/f722fc838e3e46f5ab9d8d99f0bd0574~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=202601291526017A1DD3BB98925F226B5E&rrcfp=f06b921b&x-expires=1772263607&x-signature=0G8DHkgjGrJRTus%2BDlVA85tc%2Fr8%3D',
+                    villager: 'https://p9-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/f542fdaab9214c889a0ae4b9ce546340~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=202601291526017A1DD3BB98925F226B5E&rrcfp=f06b921b&x-expires=1772263608&x-signature=nVpjqnY2FI4mrhF3ce8Fy2MSMl8%3D',
+                    question: 'https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/612500a0a94e491fa3f91ba64e3fcd73~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=202601291526017A1DD3BB98925F226B5E&rrcfp=f06b921b&x-expires=1772263653&x-signature=mvxrBwGuGHBr6UEYJfbKNRHpGIU%3D'
+                };
+                
+                const imageUrl = roleImages[roleIcon] || roleImages.question;
+                
+                // 离线状态标识
+                const isOffline = player.isOffline || false;
+                const offlineIndicator = isOffline ? '<div class="absolute -top-2 -left-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs animate-pulse">离</div>' : '';
+                
+                // 当前发言者标识
+                const isSpeaking = gameState.currentSpeaker === player.id ? '<div class="absolute -top-2 -right-2 bg-yellow-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs"><i class="fa fa-microphone"></i></div>' : '';
+                
+                characterDiv.innerHTML = `
+                    <div class="relative">
+                        <img src="${imageUrl}" alt="${player.name}" class="w-16 h-16 rounded-full border-4 border-${roleColor} mb-2 object-cover">
+                        ${!player.isAlive ? '<div class="absolute inset-0 bg-red-900 bg-opacity-70 rounded-full flex items-center justify-center"><i class="fa fa-times text-white text-2xl"></i></div>' : ''}
+                        ${player.id === currentUser.id ? '<div class="absolute -bottom-2 -right-2 bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs">我</div>' : ''}
+                        ${offlineIndicator}
+                        ${isSpeaking}
+                        <!-- 长按提示 -->
+                        <div class="absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-dark bg-opacity-90 px-2 py-1 rounded text-xs text-white opacity-0 transition-opacity duration-300 whitespace-nowrap">
+                            长按查看详情
+                        </div>
+                    </div>
+                    <span class="text-sm font-medium text-center max-w-[60px] truncate" title="${player.name}">${player.name}</span>
+                    ${gameState.phase === 'vote' && player.isAlive ? `<div class="text-xs text-gray-400">${gameState.votes[player.id] || 0}票</div>` : ''}
+                `;
+                
+                // 长按查看角色详情
+                let longPressTimer;
+                characterDiv.addEventListener('touchstart', () => {
+                    longPressTimer = setTimeout(() => {
+                        showRoleDetail(player);
+                        vibrate(100);
+                    }, 500);
+                });
+                
+                characterDiv.addEventListener('touchend', () => {
+                    clearTimeout(longPressTimer);
+                });
+                
+                characterDiv.addEventListener('touchmove', () => {
+                    clearTimeout(longPressTimer);
+                });
+                
+                // 鼠标悬停显示长按提示
+                characterDiv.addEventListener('mouseenter', () => {
+                    const tooltip = characterDiv.querySelector('.absolute.bottom-8');
+                    tooltip.style.opacity = '1';
+                });
+                
+                characterDiv.addEventListener('mouseleave', () => {
+                    const tooltip = characterDiv.querySelector('.absolute.bottom-8');
+                    tooltip.style.opacity = '0';
+                });
+                
+                // 如果是投票阶段，添加点击事件
+                if (gameState.phase === 'vote' && player.isAlive && currentUser.isAlive) {
+                    characterDiv.addEventListener('click', () => {
+                        votePlayer(player.id);
+                    });
+                }
+                
+                charactersElement.appendChild(characterDiv);
+            });
+            
+            // 显示滑动提示
+            const scrollIndicator = document.getElementById('scroll-indicator');
+            if (currentRoom.players.length > 6) {
+                scrollIndicator.classList.remove('hidden');
+                setTimeout(() => {
+                    scrollIndicator.classList.add('hidden');
+                }, 3000);
+            } else {
+                scrollIndicator.classList.add('hidden');
+            }
+        }
+        
+        // 显示角色详情
+        function showRoleDetail(player) {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4 animate-fade-in';
+            
+            let roleName = '未知';
+            let roleDescription = '';
+            
+            if (gameState.phase === 'day' || !player.isAlive || player.id === currentUser.id || currentUser.role === 'wolf') {
+                switch(player.role) {
+                    case 'wolf':
+                        roleName = '狼人';
+                        roleDescription = '每晚可以击杀一名玩家。狼人之间可以互相确认身份，并在夜晚进行交流。';
+                        break;
+                    case 'seer':
+                        roleName = '预言家';
+                        roleDescription = '每晚可以查验一名玩家的身份，得知其是好人还是狼人。';
+                        break;
+                    case 'witch':
+                        roleName = '女巫';
+                        roleDescription = '拥有一瓶解药和一瓶毒药。解药可以救起被狼人击杀的玩家；毒药可以毒死任意一名玩家。每瓶药只能使用一次。';
+                        break;
+                    case 'hunter':
+                        roleName = '猎人';
+                        roleDescription = '当猎人被狼人击杀或被村民放逐时，可以开枪带走一名玩家。但被女巫毒死时，不能开枪。';
+                        break;
+                    case 'guard':
+                        roleName = '守卫';
+                        roleDescription = '每晚可以守护一名玩家，使其免受狼人的攻击。但不能连续两晚守护同一个人。';
+                        break;
+                    case 'villager':
+                        roleName = '村民';
+                        roleDescription = '没有特殊能力，但可以通过发言和投票来找出狼人。';
+                        break;
+                }
+            }
+            
+            const roleColor = getRoleColor(player.role);
+            
+            modal.innerHTML = `
+                <div class="card-glass max-w-md w-full text-center">
+                    <div class="w-24 h-24 mx-auto mb-4 rounded-full border-4 border-${roleColor} overflow-hidden">
+                        <img src="${getRoleImage(player.role)}" alt="${roleName}" class="w-full h-full object-cover">
+                    </div>
+                    <h3 class="text-2xl font-bold mb-2">${player.name}</h3>
+                    <p class="text-${roleColor} font-bold mb-4">${roleName}</p>
+                    <p class="text-gray-300 mb-6">${roleDescription}</p>
+                    <div class="flex justify-between items-center text-sm text-gray-400 mb-6">
+                        <span>状态: ${player.isAlive ? '<span class="text-green-500">存活</span>' : '<span class="text-red-500">死亡</span>'}</span>
+                        <span>阵营: ${player.role === 'wolf' ? '<span class="text-red-500">狼人</span>' : '<span class="text-blue-500">好人</span>'}</span>
+                    </div>
+                    <button class="btn-primary w-full" onclick="this.closest('.fixed').remove()">关闭</button>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+        }
+        
+        function getRoleImage(role) {
+            const roleImages = {
+                wolf: 'https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/bc096f4d5db648f4aecc4288be43be11~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=202601291526017A1DD3BB98925F226B5E&rrcfp=f06b921b&x-expires=1772263608&x-signature=6nAyoNf2BQJgYh7OydvY5av2x%2FM%3D',
+                seer: 'https://p9-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/c417f3f0d81044379454ab5f45ba0ba2~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=202601291526017A1DD3BB98925F226B5E&rrcfp=f06b921b&x-expires=1772263607&x-signature=eSh%2FRAqtVBFVJDS4K2LyWut95To%3D',
+                witch: 'https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/e42ce82e7ac748728ca91e314357f907~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=202601291526017A1DD3BB98925F226B5E&rrcfp=f06b921b&x-expires=1772263607&x-signature=Kh199rKJIk06Jwu%2FJCJGIRNcxqQ%3D',
+                hunter: 'https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/648da048388949759ec0d086f3abfdc3~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=202601291526017A1DD3BB98925F226B5E&rrcfp=f06b921b&x-expires=1772263608&x-signature=of%2FRukV%2FYKfPzghqeCqFF6JaB3Q%3D',
+                guard: 'https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/f722fc838e3e46f5ab9d8d99f0bd0574~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=202601291526017A1DD3BB98925F226B5E&rrcfp=f06b921b&x-expires=1772263607&x-signature=0G8DHkgjGrJRTus%2BDlVA85tc%2Fr8%3D',
+                villager: 'https://p9-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/f542fdaab9214c889a0ae4b9ce546340~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=202601291526017A1DD3BB98925F226B5E&rrcfp=f06b921b&x-expires=1772263608&x-signature=nVpjqnY2FI4mrhF3ce8Fy2MSMl8%3D',
+                question: 'https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/612500a0a94e491fa3f91ba64e3fcd73~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=202601291526017A1DD3BB98925F226B5E&rrcfp=f06b921b&x-expires=1772263653&x-signature=mvxrBwGuGHBr6UEYJfbKNRHpGIU%3D'
+            };
+            
+            return roleImages[role] || roleImages.question;
+        }
+        
+        function updateGameActions() {
+            const actionsElement = document.getElementById('game-actions');
+            actionsElement.innerHTML = '';
+            
+            // 如果玩家已死亡，不显示操作
+            if (!currentUser.isAlive) {
+                actionsElement.innerHTML = `
+                    <div class="text-center text-gray-400 py-4">
+                        <p>您已死亡，无法进行操作</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            switch(gameState.phase) {
+                case 'night':
+                    // 根据角色和当前行动显示不同的操作
+                    switch(gameState.currentAction) {
+                        case 'wolf':
+                            if (currentUser.role === 'wolf') {
+                                actionsElement.innerHTML = `
+                                    <button id="btn-wolf-kill" class="btn-primary w-full mb-4">选择击杀目标</button>
+                                    <div class="text-center text-gray-300">
+                                        <p>狼人请睁眼，选择要击杀的目标</p>
+                                    </div>
+                                `;
+                                
+                                document.getElementById('btn-wolf-kill').addEventListener('click', () => {
+                                    showRoleSelectModal('wolf');
+                                });
+                            } else {
+                                actionsElement.innerHTML = `
+                                    <div class="text-center text-gray-400 py-4">
+                                        <p>请等待其他玩家操作...</p>
+                                        <div class="mt-4 flex justify-center">
+                                            <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-accent"></div>
+                                        </div>
+                                    </div>
+                                `;
+                            }
+                            break;
+                        case 'seer':
+                            if (currentUser.role === 'seer') {
+                                actionsElement.innerHTML = `
+                                    <button id="btn-seer-check" class="btn-primary w-full mb-4">选择查验目标</button>
+                                    <div class="text-center text-gray-300">
+                                        <p>预言家请睁眼，选择要查验的玩家</p>
+                                    </div>
+                                `;
+                                
+                                document.getElementById('btn-seer-check').addEventListener('click', () => {
+                                    showRoleSelectModal('seer');
+                                });
+                            } else {
+                                actionsElement.innerHTML = `
+                                    <div class="text-center text-gray-400 py-4">
+                                        <p>请等待其他玩家操作...</p>
+                                        <div class="mt-4 flex justify-center">
+                                            <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-accent"></div>
+                                        </div>
+                                    </div>
+                                `;
+                            }
+                            break;
+                        case 'witch':
+                            if (currentUser.role === 'witch') {
+                                actionsElement.innerHTML = `
+                                    <div class="grid grid-cols-2 gap-4 mb-4">
+                                        <button id="btn-witch-heal" class="btn-secondary ${gameState.witchHealUsed ? 'opacity-50 cursor-not-allowed' : ''}" ${gameState.witchHealUsed ? 'disabled' : ''}>使用解药</button>
+                                        <button id="btn-witch-poison" class="btn-outline ${gameState.witchPoisonUsed ? 'opacity-50 cursor-not-allowed' : ''}" ${gameState.witchPoisonUsed ? 'disabled' : ''}>使用毒药</button>
+                                    </div>
+                                    <div class="text-center text-gray-300">
+                                        <p>女巫请睁眼，选择要使用的药水</p>
+                                        <p class="text-sm mt-2">${gameState.wolfKilled ? `今晚狼人击杀了: ${getPlayerName(gameState.wolfKilled)}` : '今晚狼人没有击杀任何人'}</p>
+                                    </div>
+                                `;
+                                
+                                document.getElementById('btn-witch-heal').addEventListener('click', () => {
+                                    if (!gameState.witchHealUsed && gameState.wolfKilled) {
+                                        useWitchHeal();
+                                    }
+                                });
+                                
+                                document.getElementById('btn-witch-poison').addEventListener('click', () => {
+                                    if (!gameState.witchPoisonUsed) {
+                                        showRoleSelectModal('witch');
+                                    }
+                                });
+                            } else {
+                                actionsElement.innerHTML = `
+                                    <div class="text-center text-gray-400 py-4">
+                                        <p>请等待其他玩家操作...</p>
+                                        <div class="mt-4 flex justify-center">
+                                            <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-accent"></div>
+                                        </div>
+                                    </div>
+                                `;
+                            }
+                            break;
+                        case 'guard':
+                            if (currentUser.role === 'guard') {
+                                actionsElement.innerHTML = `
+                                    <button id="btn-guard-protect" class="btn-primary w-full mb-4">选择守护目标</button>
+                                    <div class="text-center text-gray-300">
+                                        <p>守卫请睁眼，选择要守护的玩家</p>
+                                        ${gameState.lastGuard ? `<p class="text-sm mt-2">上一晚守护了: ${getPlayerName(gameState.lastGuard)}</p>` : ''}
+                                    </div>
+                                `;
+                                
+                                document.getElementById('btn-guard-protect').addEventListener('click', () => {
+                                    showRoleSelectModal('guard');
+                                });
+                            } else {
+                                actionsElement.innerHTML = `
+                                    <div class="text-center text-gray-400 py-4">
+                                        <p>请等待其他玩家操作...</p>
+                                        <div class="mt-4 flex justify-center">
+                                            <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-accent"></div>
+                                        </div>
+                                    </div>
+                                `;
+                            }
+                            break;
+                    }
+                    break;
+                case 'day':
+                    actionsElement.innerHTML = `
+                        <button id="btn-chat" class="btn-primary w-full mb-4">发言</button>
+                        <div class="text-center text-gray-300">
+                            <p>白天讨论阶段，请通过发言找出狼人</p>
+                        </div>
+                    `;
+                    
+                    document.getElementById('btn-chat').addEventListener('click', toggleChat);
+                    break;
+                case 'vote':
+                    actionsElement.innerHTML = `
+                        <div class="text-center text-gray-300 py-4">
+                            <p>请点击上方玩家头像进行投票</p>
+                            <p class="text-sm mt-2">投票将决定谁被放逐</p>
+                        </div>
+                    `;
+                    break;
+            }
+            
+            // 添加聊天按钮
+            const chatButton = document.createElement('button');
+            chatButton.id = 'btn-open-chat';
+            chatButton.className = 'btn-secondary w-full mt-4';
+            chatButton.textContent = '打开聊天';
+            chatButton.addEventListener('click', toggleChat);
+            actionsElement.appendChild(chatButton);
+        }
+        
+        function nextGamePhase() {
+            switch(gameState.phase) {
+                case 'night':
+                    // 夜晚结束，进入白天
+                    gameState.phase = 'day';
+                    updateGamePhase();
+                    updateGameCharacters();
+                    updateGameActions();
+                    startPhaseTimer(120);
+                    
+                    // 检查游戏是否结束
+                    if (checkGameOver()) {
+                        return;
+                    }
+                    break;
+                case 'day':
+                    // 白天结束，进入投票
+                    gameState.phase = 'vote';
+                    gameState.votes = {};
+                    updateGamePhase();
+                    updateGameCharacters();
+                    updateGameActions();
+                    startPhaseTimer(60);
+                    break;
+                case 'vote':
+                    // 投票结束，处理投票结果
+                    processVotes();
+                    
+                    // 进入下一个夜晚
+                    gameState.phase = 'night';
+                    gameState.dayCount++;
+                    
+                    // 重置夜晚行动
+                    gameState.currentAction = 'wolf';
+                    
+                    updateGamePhase();
+                    updateGameCharacters();
+                    updateGameActions();
+                    startPhaseTimer(60);
+                    
+                    // 检查游戏是否结束
+                    if (checkGameOver()) {
+                        return;
+                    }
+                    break;
+            }
+        }
+        
+        function processVotes() {
+            // 统计投票
+            const voteCounts = {};
+            Object.values(gameState.votes).forEach(votedId => {
+                voteCounts[votedId] = (voteCounts[votedId] || 0) + 1;
+            });
+            
+            // 找出得票最多的玩家
+            let maxVotes = 0;
+            let maxVotedPlayers = [];
+            
+            Object.entries(voteCounts).forEach(([playerId, count]) => {
+                if (count > maxVotes) {
+                    maxVotes = count;
+                    maxVotedPlayers = [playerId];
+                } else if (count === maxVotes) {
+                    maxVotedPlayers.push(playerId);
+                }
+            });
+            
+            // 如果有平票，随机选择一名玩家
+            if (maxVotedPlayers.length > 1) {
+                shuffleArray(maxVotedPlayers);
+            }
+            
+            const votedPlayerId = maxVotedPlayers[0];
+            
+            // 如果有玩家被投票放逐
+            if (votedPlayerId) {
+                const votedPlayer = currentRoom.players.find(p => p.id === votedPlayerId);
+                
+                // 标记玩家为死亡
+                votedPlayer.isAlive = false;
+                
+                // 检查猎人是否被放逐
+                if (votedPlayer.role === 'hunter') {
+                    // 猎人可以开枪带走一名玩家
+                    // 这里简化处理，随机选择一名玩家
+                    const alivePlayers = currentRoom.players.filter(p => p.isAlive && p.id !== votedPlayerId);
+                    if (alivePlayers.length > 0) {
+                        shuffleArray(alivePlayers);
+                        const shotPlayer = alivePlayers[0];
+                        shotPlayer.isAlive = false;
+                        
+                        addGameInfo(`${votedPlayer.name}（猎人）被放逐，开枪带走了${shotPlayer.name}`);
+                    } else {
+                        addGameInfo(`${votedPlayer.name}（猎人）被放逐，但没有可以开枪的目标`);
+                    }
+                } else {
+                    addGameInfo(`${votedPlayer.name}被放逐`);
+                }
+            } else {
+                addGameInfo('投票结束，没有人被放逐');
+            }
+        }
+        
+        function checkGameOver() {
+            // 检查狼人是否全部死亡
+            const aliveWolves = currentRoom.players.filter(p => p.isAlive && p.role === 'wolf');
+            if (aliveWolves.length === 0) {
+                // 好人胜利
+                endGame('好人');
+                return true;
+            }
+            
+            // 检查好人是否全部死亡
+            const aliveGood = currentRoom.players.filter(p => p.isAlive && p.role !== 'wolf');
+            if (aliveGood.length === 0) {
+                // 狼人胜利
+                endGame('狼人');
+                return true;
+            }
+            
+            // 检查神职是否全部死亡
+            const aliveClergy = currentRoom.players.filter(p => p.isAlive && ['seer', 'witch', 'hunter', 'guard'].includes(p.role));
+            const aliveVillagers = currentRoom.players.filter(p => p.isAlive && p.role === 'villager');
+            
+            // 如果只剩下狼人和村民，且狼人数量大于等于村民数量
+            if (aliveClergy.length === 0 && aliveWolves.length >= aliveVillagers.length) {
+                // 狼人胜利
+                endGame('狼人');
+                return true;
+            }
+            
+            return false;
+        }
+        
+        function endGame(winner) {
+            // 停止计时器
+            stopPhaseTimer();
+            
+            // 设置游戏结束状态
+            currentRoom.isGameOver = true;
+            
+            // 更新游戏结束页面
+            document.getElementById('winner-title').textContent = winner === '狼人' ? '狼人胜利！' : '好人胜利！';
+            document.getElementById('winner-description').textContent = 
+                winner === '狼人' 
+                    ? '狼人成功消灭了所有村民，村庄陷入了永恒的黑暗...' 
+                    : '村民成功找出了所有狼人，村庄恢复了和平...';
+            
+            // 更新角色身份
+            updateRoleReveal();
+            
+            // 显示游戏结束页面
+            showGameOverSection();
+            
+            // 绑定再来一局按钮
+            document.getElementById('btn-play-again').addEventListener('click', playAgain);
+            document.getElementById('btn-back-to-lobby').addEventListener('click', backToLobby);
+        }
+        
+        function updateRoleReveal() {
+            const roleRevealElement = document.getElementById('role-reveal');
+            roleRevealElement.innerHTML = '';
+            
+            currentRoom.players.forEach(player => {
+                const roleDiv = document.createElement('div');
+                roleDiv.className = 'flex flex-col items-center';
+                
+                let roleName = '';
+                let roleColor = '';
+                
+                switch(player.role) {
+                    case 'wolf':
+                        roleName = '狼人';
+                        roleColor = 'wolf';
+                        break;
+                    case 'seer':
+                        roleName = '预言家';
+                        roleColor = 'seer';
+                        break;
+                    case 'witch':
+                        roleName = '女巫';
+                        roleColor = 'witch';
+                        break;
+                    case 'hunter':
+                        roleName = '猎人';
+                        roleColor = 'hunter';
+                        break;
+                    case 'guard':
+                        roleName = '守卫';
+                        roleColor = 'guard';
+                        break;
+                    case 'villager':
+                        roleName = '村民';
+                        roleColor = 'villager';
+                        break;
+                }
+                
+                roleDiv.innerHTML = `
+                    <div class="w-12 h-12 rounded-full bg-${roleColor} bg-opacity-20 flex items-center justify-center mb-2">
+                        <span class="text-${roleColor} font-bold">${roleName.charAt(0)}</span>
+                    </div>
+                    <span class="text-sm">${player.name}</span>
+                    <span class="text-xs text-${roleColor}">${roleName}</span>
+                `;
+                
+                roleRevealElement.appendChild(roleDiv);
+            });
+        }
+        
+        function playAgain() {
+            // 重置游戏状态
+            currentRoom.isGameStarted = false;
+            currentRoom.isGameOver = false;
+            currentRoom.currentPhase = null;
+            
+            // 重置玩家状态
+            currentRoom.players.forEach(player => {
+                player.isAlive = true;
+            });
+            
+            // 重新分配角色
+            assignRoles();
+            
+            // 初始化游戏状态
+            gameState = {
+                phase: 'night',
+                dayCount: 1,
+                currentAction: 'wolf',
+                votes: {},
+                lastGuard: null,
+                witchHealUsed: false,
+                witchPoisonUsed: false,
+                seerChecked: null,
+                wolfKilled: null
+            };
+            
+            // 显示游戏页面
+            showGameSection();
+            
+            // 显示角色
+            setTimeout(() => {
+                showRoleReveal();
+            }, 1000);
+        }
+        
+        function backToLobby() {
+            // 重置房间和游戏状态
+            currentRoom = {
+                id: null,
+                name: null,
+                password: null,
+                playerCount: 6,
+                players: [],
+                roles: [],
+                isGameStarted: false,
+                currentPhase: null,
+                phaseTimer: null
+            };
+            
+            gameState = {
+                phase: 'night',
+                dayCount: 1,
+                currentAction: null,
+                votes: {},
+                lastGuard: null,
+                witchHealUsed: false,
+                witchPoisonUsed: false,
+                seerChecked: null,
+                wolfKilled: null
+            };
+            
+            currentUser.isHost = false;
+            currentUser.isReady = false;
+            currentUser.role = null;
+            currentUser.isAlive = true;
+            
+            // 返回欢迎页面
+            showSection('welcome-section');
+        }
+        
+        // 辅助函数
+        function generateUniqueId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+        }
+        
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+        
+        function generateRoles(playerCount) {
+            const roles = [];
+            
+            // 根据人数确定角色数量
+            let wolfCount = 2;
+            let seerCount = 1;
+            let witchCount = 1;
+            let hunterCount = 1;
+            let guardCount = 0;
+            let villagerCount = playerCount - wolfCount - seerCount - witchCount - hunterCount - guardCount;
+            
+            if (playerCount >= 9) {
+                wolfCount = 3;
+                guardCount = 1;
+                villagerCount = playerCount - wolfCount - seerCount - witchCount - hunterCount - guardCount;
+            }
+            
+            if (playerCount >= 12) {
+                wolfCount = 4;
+                villagerCount = playerCount - wolfCount - seerCount - witchCount - hunterCount - guardCount;
+            }
+            
+            // 添加角色
+            for (let i = 0; i < wolfCount; i++) roles.push('wolf');
+            for (let i = 0; i < seerCount; i++) roles.push('seer');
+            for (let i = 0; i < witchCount; i++) roles.push('witch');
+            for (let i = 0; i < hunterCount; i++) roles.push('hunter');
+            for (let i = 0; i < guardCount; i++) roles.push('guard');
+            for (let i = 0; i < villagerCount; i++) roles.push('villager');
+            
+            return roles;
+        }
+        
+        function updatePlayerList() {
+            const playerListElement = document.getElementById('player-list');
+            playerListElement.innerHTML = '';
+            
+            currentRoom.players.forEach(player => {
+                const playerDiv = document.createElement('div');
+                playerDiv.className = 'flex flex-col items-center p-3 rounded-lg bg-dark bg-opacity-50';
+                
+                // 房主标记
+                const hostBadge = player.isHost ? '<div class="absolute -top-2 -right-2 bg-yellow-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs">房主</div>' : '';
+                
+                // 准备状态
+                const readyStatus = player.isReady || player.isHost ? 
+                    '<div class="mt-1 text-green-500 text-xs"><i class="fa fa-check-circle"></i> 已准备</div>' : 
+                    '<div class="mt-1 text-gray-500 text-xs"><i class="fa fa-clock-o"></i> 等待准备</div>';
+                
+                playerDiv.innerHTML = `
+                    <div class="relative">
+                        <div class="w-16 h-16 rounded-full bg-gray-700 flex items-center justify-center mb-2">
+                            <i class="fa fa-user text-white text-2xl"></i>
+                        </div>
+                        ${hostBadge}
+                    </div>
+                    <span class="text-sm font-medium">${player.name}</span>
+                    ${readyStatus}
+                `;
+                
+                playerListElement.appendChild(playerDiv);
+            });
+            
+            // 添加空位
+            const emptySlots = currentRoom.playerCount - currentRoom.players.length;
+            for (let i = 0; i < emptySlots; i++) {
+                const slotDiv = document.createElement('div');
+                slotDiv.className = 'flex flex-col items-center p-3 rounded-lg bg-dark bg-opacity-30 border border-dashed border-gray-600';
+                
+                slotDiv.innerHTML = `
+                    <div class="w-16 h-16 rounded-full bg-gray-800 flex items-center justify-center mb-2">
+                        <i class="fa fa-user-plus text-gray-500 text-2xl"></i>
+                    </div>
+                    <span class="text-sm text-gray-500">等待玩家</span>
+                `;
+                
+                playerListElement.appendChild(slotDiv);
+            }
+        }
+        
+        function updateRoomSettings() {
+            const settingsElement = document.getElementById('room-settings');
+            settingsElement.innerHTML = `
+                <div class="space-y-2">
+                    <p><span class="font-medium">房间名称:</span> ${currentRoom.name}</p>
+                    <p><span class="font-medium">游戏人数:</span> ${currentRoom.players.length}/${currentRoom.playerCount}</p>
+                    <p><span class="font-medium">房间密码:</span> ${currentRoom.password ? '已设置' : '无'}</p>
+                </div>
+            `;
+        }
+        
+        function updateRoomActions() {
+            const hostActions = document.getElementById('host-actions');
+            const playerActions = document.getElementById('player-actions');
+            const waitingMessage = document.getElementById('waiting-message');
+            
+            if (currentUser.isHost) {
+                hostActions.classList.remove('hidden');
+                playerActions.classList.add('hidden');
+                waitingMessage.classList.add('hidden');
+            } else {
+                hostActions.classList.add('hidden');
+                playerActions.classList.remove('hidden');
+                waitingMessage.classList.remove('hidden');
+                
+                // 更新准备按钮状态
+                const readyButton = document.getElementById('btn-ready');
+                if (currentUser.isReady) {
+                    readyButton.textContent = '取消准备';
+                    readyButton.classList.remove('btn-primary');
+                    readyButton.classList.add('btn-outline');
+                } else {
+                    readyButton.textContent = '准备';
+                    readyButton.classList.add('btn-primary');
+                    readyButton.classList.remove('btn-outline');
+                }
+            }
+        }
+        
+        function toggleReady() {
+            if (socketManager.currentRoom && socketManager.userInfo) {
+                const currentReadyState = !socketManager.userInfo.isReady;
+                socketManager.socket.emit('toggle_ready', {
+                    roomId: socketManager.currentRoom.id,
+                    isReady: currentReadyState
+                });
+            }
+        }
+        
+        function selectPlayerCount(button) {
+            // 移除其他按钮的选中状态
+            document.querySelectorAll('.player-count-btn').forEach(btn => {
+                btn.classList.remove('bg-accent');
+                btn.classList.add('bg-dark');
+            });
+            
+            // 添加当前按钮的选中状态
+            button.classList.remove('bg-dark');
+            button.classList.add('bg-accent');
+            
+            // 更新玩家数量
+            currentRoom.playerCount = parseInt(button.getAttribute('data-count'));
+            
+            // 更新角色配置
+            initRoleConfig();
+        }
+        
+        function initRoleConfig() {
+            const roleConfigElement = document.getElementById('role-config');
+            roleConfigElement.innerHTML = '';
+            
+            // 根据玩家数量生成角色配置
+            const roles = generateRoles(currentRoom.playerCount);
+            const roleCounts = {};
+            
+            roles.forEach(role => {
+                roleCounts[role] = (roleCounts[role] || 0) + 1;
+            });
+            
+            // 角色名称映射
+            const roleNames = {
+                wolf: '狼人',
+                seer: '预言家',
+                witch: '女巫',
+                hunter: '猎人',
+                guard: '守卫',
+                villager: '村民'
+            };
+            
+            // 添加角色配置
+            Object.entries(roleCounts).forEach(([role, count]) => {
+                const roleDiv = document.createElement('div');
+                roleDiv.className = 'flex items-center justify-between p-2 bg-dark bg-opacity-50 rounded';
+                
+                roleDiv.innerHTML = `
+                    <span>${roleNames[role]}</span>
+                    <span class="font-bold">${count}</span>
+                `;
+                
+                roleConfigElement.appendChild(roleDiv);
+            });
+        }
+        
+        function editSettings() {
+            // 切换到创建房间页面，但保留当前设置
+            showCreateRoomSection();
+            
+            // 填充当前设置
+            document.getElementById('room-name').value = currentRoom.name;
+            document.getElementById('room-password').value = currentRoom.password || '';
+            
+            // 选中当前玩家数量
+            document.querySelectorAll('.player-count-btn').forEach(btn => {
+                if (parseInt(btn.getAttribute('data-count')) === currentRoom.playerCount) {
+                    btn.click();
+                }
+            });
+            
+            // 修改创建房间按钮文本
+            const createButton = document.getElementById('btn-create-room-submit');
+            createButton.textContent = '更新设置';
+            createButton.removeEventListener('click', createRoom);
+            createButton.addEventListener('click', updateRoomSettings);
+        }
+        
+        function updateRoomSettings() {
+            const roomName = document.getElementById('room-name').value || '未命名房间';
+            const roomPassword = document.getElementById('room-password').value;
+            
+            // 更新房间设置
+            currentRoom.name = roomName;
+            currentRoom.password = roomPassword;
+            
+            // 模拟更新房间请求
+            ws.send({
+                type: 'update_room',
+                room: currentRoom
+            });
+            
+            // 返回房间等待页面
+            showRoomWaitingSection();
+            
+            showNotification('success', '设置已更新', '房间设置已成功更新');
+        }
+        
+        function kickPlayer() {
+            // 简化处理，实际应该显示玩家列表让房主选择
+            showNotification('info', '功能开发中', '踢出玩家功能正在开发中');
+        }
+        
+        function copyRoomId() {
+            const roomId = currentRoom.id;
+            
+            // 复制到剪贴板
+            navigator.clipboard.writeText(roomId).then(() => {
+                showNotification('success', '复制成功', '房间号已复制到剪贴板');
+            }).catch(() => {
+                showNotification('error', '复制失败', '无法复制房间号');
+            });
+        }
+        
+        function showRoleReveal() {
+            // 显示角色揭示动画
+            const roleName = getRoleName(currentUser.role);
+            const roleColor = getRoleColor(currentUser.role);
+            
+            const notification = document.createElement('div');
+            notification.className = 'fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 animate-fade-in';
+            notification.innerHTML = `
+                <div class="text-center p-8">
+                    <h3 class="text-4xl font-bold mb-6 text-${roleColor}">您的角色是</h3>
+                    <div class="w-32 h-32 mx-auto mb-6 rounded-full border-8 border-${roleColor} flex items-center justify-center bg-dark">
+                        <span class="text-4xl font-bold text-${roleColor}">${roleName}</span>
+                    </div>
+                    <p class="text-xl mb-8">游戏即将开始，请记住您的身份</p>
+                    <button id="btn-close-role-reveal" class="btn-primary">确定</button>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            document.getElementById('btn-close-role-reveal').addEventListener('click', () => {
+                notification.remove();
+            });
+        }
+        
+        function getRoleName(role) {
+            switch(role) {
+                case 'wolf': return '狼人';
+                case 'seer': return '预言家';
+                case 'witch': return '女巫';
+                case 'hunter': return '猎人';
+                case 'guard': return '守卫';
+                case 'villager': return '村民';
+                default: return '未知';
+            }
+        }
+        
+        function getRoleColor(role) {
+            switch(role) {
+                case 'wolf': return 'wolf';
+                case 'seer': return 'seer';
+                case 'witch': return 'witch';
+                case 'hunter': return 'hunter';
+                case 'guard': return 'guard';
+                case 'villager': return 'villager';
+                default: return 'gray';
+            }
+        }
+        
+        function getPlayerName(playerId) {
+            const player = currentRoom.players.find(p => p.id === playerId);
+            return player ? player.name : '未知玩家';
+        }
+        
+        function showRoleSelectModal(action) {
+            const modal = document.getElementById('role-select-modal');
+            const selectList = document.getElementById('role-select-list');
+            selectList.innerHTML = '';
+            
+            // 根据行动类型过滤可选玩家
+            let availablePlayers = [];
+            
+            switch(action) {
+                case 'wolf':
+                    // 狼人可以击杀所有活着的非狼人玩家
+                    availablePlayers = currentRoom.players.filter(p => p.isAlive && p.role !== 'wolf');
+                    document.querySelector('#role-select-modal h3').textContent = '选择击杀目标';
+                    break;
+                case 'seer':
+                    // 预言家可以查验所有活着的玩家
+                    availablePlayers = currentRoom.players.filter(p => p.isAlive);
+                    document.querySelector('#role-select-modal h3').textContent = '选择查验目标';
+                    break;
+                case 'witch':
+                    // 女巫可以毒死所有活着的玩家
+                    availablePlayers = currentRoom.players.filter(p => p.isAlive);
+                    document.querySelector('#role-select-modal h3').textContent = '选择毒杀目标';
+                    break;
+                case 'guard':
+                    // 守卫可以守护所有活着的玩家，但不能连续守护同一个人
+                    availablePlayers = currentRoom.players.filter(p => p.isAlive && p.id !== gameState.lastGuard);
+                    document.querySelector('#role-select-modal h3').textContent = '选择守护目标';
+                    break;
+            }
+            
+            // 添加可选玩家
+            availablePlayers.forEach(player => {
+                const playerDiv = document.createElement('div');
+                playerDiv.className = 'flex flex-col items-center cursor-pointer hover:scale-110 transition-transform';
+                
+                playerDiv.innerHTML = `
+                    <div class="w-16 h-16 rounded-full bg-gray-700 flex items-center justify-center mb-2">
+                        <i class="fa fa-user text-white text-2xl"></i>
+                    </div>
+                    <span class="text-sm">${player.name}</span>
+                `;
+                
+                playerDiv.addEventListener('click', () => {
+                    selectTarget(player.id, action);
+                    hideRoleSelectModal();
+                });
+                
+                selectList.appendChild(playerDiv);
+            });
+            
+            // 显示模态框
+            modal.classList.remove('hidden');
+        }
+        
+        function hideRoleSelectModal() {
+            document.getElementById('role-select-modal').classList.add('hidden');
+        }
+        
+        function selectTarget(targetId, action) {
+            // 处理不同的行动
+            switch(action) {
+                case 'wolf':
+                    // 狼人击杀
+                    gameState.wolfKilled = targetId;
+                    addGameInfo(`狼人选择击杀了${getPlayerName(targetId)}`);
+                    
+                    // 切换到预言家行动
+                    gameState.currentAction = 'seer';
+                    updateGamePhase();
+                    updateGameActions();
+                    break;
+                case 'seer':
+                    // 预言家查验
+                    gameState.seerChecked = targetId;
+                    
+                    // 获取目标玩家的角色
+                    const targetPlayer = currentRoom.players.find(p => p.id === targetId);
+                    const isWolf = targetPlayer.role === 'wolf';
+                    
+                    // 显示查验结果
+                    showNotification('info', '查验结果', `${targetPlayer.name}是${isWolf ? '狼人' : '好人'}`);
+                    addGameInfo(`预言家查验了${targetPlayer.name}`);
+                    
+                    // 切换到女巫行动
+                    gameState.currentAction = 'witch';
+                    updateGamePhase();
+                    updateGameActions();
+                    break;
+                case 'witch':
+                    // 女巫毒杀
+                    gameState.witchPoisonUsed = true;
+                    
+                    // 标记目标为死亡
+                    const poisonedPlayer = currentRoom.players.find(p => p.id === targetId);
+                    poisonedPlayer.isAlive = false;
+                    
+                    addGameInfo(`女巫使用毒药毒死了${poisonedPlayer.name}`);
+                    
+                    // 切换到守卫行动
+                    gameState.currentAction = 'guard';
+                    updateGamePhase();
+                    updateGameActions();
+                    break;
+                case 'guard':
+                    // 守卫守护
+                    gameState.lastGuard = targetId;
+                    addGameInfo(`守卫守护了${getPlayerName(targetId)}`);
+                    
+                    // 夜晚结束，进入白天
+                    nextGamePhase();
+                    break;
+            }
+        }
+        
+        function useWitchHeal() {
+            // 女巫使用解药
+            gameState.witchHealUsed = true;
+            gameState.wolfKilled = null;
+            
+            addGameInfo('女巫使用解药救了被狼人击杀的玩家');
+            
+            // 切换到守卫行动
+            gameState.currentAction = 'guard';
+            updateGamePhase();
+            updateGameActions();
+        }
+        
+        function votePlayer(playerId) {
+            // 记录投票
+            gameState.votes[currentUser.id] = playerId;
+            
+            // 模拟投票请求
+            ws.send({
+                type: 'vote',
+                roomId: currentRoom.id,
+                userId: currentUser.id,
+                votedId: playerId
+            });
+            
+            showNotification('success', '投票成功', `您投票给了${getPlayerName(playerId)}`);
+            
+            // 更新游戏角色显示
+            updateGameCharacters();
+        }
+        
+        function addGameInfo(message) {
+            const infoElement = document.getElementById('game-info');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'mb-2 text-gray-300';
+            messageDiv.textContent = `[${getCurrentTime()}] ${message}`;
+            
+            infoElement.appendChild(messageDiv);
+            
+            // 滚动到底部
+            infoElement.scrollTop = infoElement.scrollHeight;
+        }
+        
+        function getCurrentTime() {
+            const now = new Date();
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            return `${hours}:${minutes}`;
+        }
+        
+        function startPhaseTimer(seconds) {
+            // 停止之前的计时器
+            stopPhaseTimer();
+            
+            // 设置计时器
+            currentRoom.phaseTimer = {
+                total: seconds,
+                remaining: seconds,
+                interval: setInterval(() => {
+                    currentRoom.phaseTimer.remaining--;
+                    
+                    // 更新计时器显示
+                    document.getElementById('phase-timer').textContent = currentRoom.phaseTimer.remaining;
+                    
+                    // 更新进度环
+                    updateProgressRing(currentRoom.phaseTimer.remaining / currentRoom.phaseTimer.total);
+                    
+                    // 计时器结束
+                    if (currentRoom.phaseTimer.remaining <= 0) {
+                        stopPhaseTimer();
+                        
+                        // 根据当前阶段执行不同操作
+                        if (gameState.phase === 'night') {
+                            // 如果是夜晚，自动进行下一阶段
+                            if (gameState.currentAction !== 'guard') {
+                                // 如果不是守卫阶段，自动切换到下一行动
+                                switch(gameState.currentAction) {
+                                    case 'wolf':
+                                        // 如果狼人没有选择目标，随机选择一个
+                                        if (!gameState.wolfKilled) {
+                                            const availableTargets = currentRoom.players.filter(p => p.isAlive && p.role !== 'wolf');
+                                            if (availableTargets.length > 0) {
+                                                shuffleArray(availableTargets);
+                                                gameState.wolfKilled = availableTargets[0].id;
+                                                addGameInfo(`狼人选择击杀了${getPlayerName(gameState.wolfKilled)}`);
+                                            }
+                                        }
+                                        gameState.currentAction = 'seer';
+                                        break;
+                                    case 'seer':
+                                        gameState.currentAction = 'witch';
+                                        break;
+                                    case 'witch':
+                                        gameState.currentAction = 'guard';
+                                        break;
+                                }
+                                updateGamePhase();
+                                updateGameActions();
+                                startPhaseTimer(60);
+                            } else {
+                                // 如果是守卫阶段，进入白天
+                                nextGamePhase();
+                            }
+                        } else if (gameState.phase === 'day') {
+                            // 如果是白天，进入投票
+                            nextGamePhase();
+                        } else if (gameState.phase === 'vote') {
+                            // 如果是投票，处理投票结果
+                            nextGamePhase();
+                        }
+                    }
+                }, 1000)
+            };
+            
+            // 初始化进度环
+            updateProgressRing(1);
+        }
+        
+        function stopPhaseTimer() {
+            if (currentRoom.phaseTimer && currentRoom.phaseTimer.interval) {
+                clearInterval(currentRoom.phaseTimer.interval);
+                currentRoom.phaseTimer = null;
+            }
+        }
+        
+        function updateProgressRing(percentage) {
+            const circle = document.querySelector('.progress-ring-circle');
+            const radius = circle.r.baseVal.value;
+            const circumference = radius * 2 * Math.PI;
+            
+            circle.style.strokeDasharray = `${circumference} ${circumference}`;
+            const offset = circumference - percentage * circumference;
+            circle.style.strokeDashoffset = offset;
+        }
+        
+        function toggleChat() {
+            const chatModal = document.getElementById('chat-modal');
+            chatModal.classList.toggle('hidden');
+            
+            // 如果显示聊天，自动聚焦输入框
+            if (!chatModal.classList.contains('hidden')) {
+                document.getElementById('chat-input').focus();
+            }
+        }
+        
+        function sendChat() {
+            const chatInput = document.getElementById('chat-input');
+            const message = chatInput.value.trim();
+            
+            if (message && socketManager.isConnected) {
+                socketManager.sendChatMessage(message);
+                chatInput.value = '';
+            }
+        }
+        
+        function showNotification(type, title, message) {
+            const notification = document.getElementById('notification');
+            const iconElement = document.getElementById('notification-icon');
+            const titleElement = document.getElementById('notification-title');
+            const messageElement = document.getElementById('notification-message');
+            
+            // 设置通知类型
+            let iconClass = 'fa-info-circle text-blue-500';
+            
+            switch(type) {
+                case 'success':
+                    iconClass = 'fa-check-circle text-green-500';
+                    break;
+                case 'error':
+                    iconClass = 'fa-exclamation-circle text-red-500';
+                    break;
+                case 'warning':
+                    iconClass = 'fa-exclamation-triangle text-yellow-500';
+                    break;
+            }
+            
+            // 设置通知内容
+            iconElement.innerHTML = `<i class="fa ${iconClass} text-xl"></i>`;
+            titleElement.textContent = title;
+            messageElement.textContent = message;
+            
+            // 显示通知
+            notification.classList.remove('hidden');
+            notification.classList.remove('translate-x-full');
+            
+            // 3秒后自动隐藏
+            setTimeout(() => {
+                hideNotification();
+            }, 3000);
+        }
+        
+        function hideNotification() {
+            const notification = document.getElementById('notification');
+            notification.classList.add('translate-x-full');
+            
+            // 动画结束后完全隐藏
+            setTimeout(() => {
+                notification.classList.add('hidden');
+            }, 300);
+        }
+        
+        function showReconnectModal() {
+            document.getElementById('reconnect-modal').classList.remove('hidden');
+        }
+        
+        function hideReconnectModal() {
+            document.getElementById('reconnect-modal').classList.add('hidden');
+        }
+        
+        function reconnect() {
+            // 模拟重连请求
+            setTimeout(() => {
+                ws.connected = true;
+                hideReconnectModal();
+                showNotification('success', '重连成功', '已成功重新连接到游戏');
+            }, 1000);
+        }
+        
+        function startConnectionCheck() {
+            // 模拟连接检查
+            setInterval(() => {
+                // 随机模拟断线
+                if (ws.connected && Math.random() < 0.001 && (currentRoom.isGameStarted || currentRoom.id)) {
+                    ws.close();
+                }
+            }, 1000);
+        }
+        
+        function checkForActiveGame() {
+            // 检查是否有未完成的游戏
+            const savedGame = localStorage.getItem('activeGame');
+            
+            if (savedGame) {
+                try {
+                    const gameData = JSON.parse(savedGame);
+                    
+                    // 显示恢复游戏提示
+                    showResumeGameModal(gameData);
+                } catch (e) {
+                    console.error('恢复游戏失败:', e);
+                    localStorage.removeItem('activeGame');
+                }
+            }
+        }
+        
+        // 显示恢复游戏弹窗
+        function showResumeGameModal(gameData) {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4 animate-fade-in';
+            
+            modal.innerHTML = `
+                <div class="card-glass max-w-md w-full text-center">
+                    <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-accent flex items-center justify-center">
+                        <i class="fa fa-refresh text-white text-3xl"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-2">发现未完成的游戏</h3>
+                    <p class="text-gray-300 mb-6">是否回到之前的游戏？</p>
+                    <div class="space-y-4">
+                        <div class="bg-dark bg-opacity-50 rounded-lg p-4 text-left">
+                            <p class="font-medium mb-1">房间: ${gameData.room.name}</p>
+                            <p class="text-sm text-gray-400">房间号: ${gameData.room.id}</p>
+                            <p class="text-sm text-gray-400">游戏状态: ${gameData.room.isGameStarted ? (gameData.room.isGameOver ? '已结束' : '进行中') : '等待中'}</p>
+                        </div>
+                        <div class="flex space-x-4">
+                            <button id="btn-resume-game" class="btn-primary flex-1">回到游戏</button>
+                            <button id="btn-abandon-game" class="btn-outline flex-1">放弃游戏</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            document.getElementById('btn-resume-game').addEventListener('click', () => {
+                // 恢复游戏状态
+                currentRoom = gameData.room;
+                currentUser = gameData.user;
+                gameState = gameData.gameState;
+                
+                // 显示相应的页面
+                if (currentRoom.isGameStarted) {
+                    if (currentRoom.isGameOver) {
+                        showGameOverSection();
+                    } else {
+                        showGameSection();
+                        // 模拟重连
+                        simulateReconnect();
+                    }
+                } else {
+                    showRoomWaitingSection();
+                }
+                
+                modal.remove();
+            });
+            
+            document.getElementById('btn-abandon-game').addEventListener('click', () => {
+                localStorage.removeItem('activeGame');
+                modal.remove();
+            });
+        }
+        
+        // 模拟重连过程
+        function simulateReconnect() {
+            showNotification('info', '正在重连', '正在重新连接到游戏...');
+            
+            // 模拟重连延迟
+            setTimeout(() => {
+                // 重连成功
+                ws.connected = true;
+                hideReconnectModal();
+                
+                // 同步游戏信息
+                syncGameInfo();
+                
+                showNotification('success', '重连成功', '已成功重新连接到游戏');
+                vibrate([100, 50, 100]); // 成功震动模式
+            }, 2000);
+        }
+        
+        // 同步游戏信息
+        function syncGameInfo() {
+            // 这里应该从服务器获取最新的游戏状态
+            // 现在模拟同步全量信息
+            updateGamePhase();
+            updateGameCharacters();
+            updateGameActions();
+            
+            // 如果有计时器，重新启动
+            if (currentRoom.phaseTimer) {
+                startPhaseTimer(currentRoom.phaseTimer.remaining || 60);
+            }
+        }
+        
+        function saveActiveGame() {
+            // 保存当前游戏状态
+            const gameData = {
+                room: currentRoom,
+                user: currentUser,
+                gameState: gameState
+            };
+            
+            localStorage.setItem('activeGame', JSON.stringify(gameData));
+        }
+        
+        function saveRecentRoom(room) {
+            // 获取最近房间
+            let recentRooms = JSON.parse(localStorage.getItem('recentRooms') || '[]');
+            
+            // 移除已存在的相同房间
+            recentRooms = recentRooms.filter(r => r.id !== room.id);
+            
+            // 添加新房间到开头
+            recentRooms.unshift({
+                id: room.id,
+                name: room.name,
+                password: room.password
+            });
+            
+            // 只保留最近3个房间
+            recentRooms = recentRooms.slice(0, 3);
+            
+            // 保存最近房间
+            localStorage.setItem('recentRooms', JSON.stringify(recentRooms));
+            
+            // 更新最近房间显示
+            loadRecentRooms();
+        }
+        
+        function loadRecentRooms() {
+            const recentRoomsElement = document.getElementById('recent-rooms');
+            const recentRooms = JSON.parse(localStorage.getItem('recentRooms') || '[]');
+            
+            if (recentRooms.length === 0) {
+                recentRoomsElement.classList.add('hidden');
+                return;
+            }
+            
+            recentRoomsElement.classList.remove('hidden');
+            
+            const roomsContainer = recentRoomsElement.querySelector('div');
+            roomsContainer.innerHTML = '';
+            
+            recentRooms.forEach(room => {
+                const roomDiv = document.createElement('div');
+                roomDiv.className = 'card-glass p-4 cursor-pointer hover:scale-105 transition-transform';
+                
+                roomDiv.innerHTML = `
+                    <h4 class="font-bold mb-1">${room.name}</h4>
+                    <p class="text-sm text-gray-400">房间号: ${room.id}</p>
+                    ${room.password ? '<p class="text-xs text-yellow-500">有密码</p>' : ''}
+                `;
+                
+                roomDiv.addEventListener('click', () => {
+                    // 填充房间号和密码
+                    document.getElementById('room-id').value = room.id;
+                    document.getElementById('join-room-password').value = room.password || '';
+                    
+                    // 显示加入房间页面
+                    showJoinRoomSection();
+                });
+                
+                roomsContainer.appendChild(roomDiv);
+            });
+        }
+        
+        // 初始化快速加入房间
+        function initQuickJoinRooms() {
+            const quickJoinList = document.getElementById('quick-join-list');
+            const recentRooms = JSON.parse(localStorage.getItem('recentRooms') || '[]');
+            
+            if (!quickJoinList) return;
+            
+            quickJoinList.innerHTML = '';
+            
+            if (recentRooms.length === 0) {
+                quickJoinList.innerHTML = `
+                    <div class="col-span-full text-center text-gray-400 py-8">
+                        <p>暂无最近加入的房间</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            recentRooms.slice(0, 3).forEach(room => {
+                const roomCard = document.createElement('div');
+                roomCard.className = 'card-glass p-4 cursor-pointer hover:scale-105 transition-all duration-300 transform';
+                
+                roomCard.innerHTML = `
+                    <div class="flex items-center justify-between mb-2">
+                        <h4 class="font-bold">${room.name}</h4>
+                        ${room.password ? '<span class="text-xs bg-yellow-500 text-white px-2 py-1 rounded">密码房</span>' : ''}
+                    </div>
+                    <div class="flex items-center text-sm text-gray-400 mb-3">
+                        <i class="fa fa-key mr-2"></i>
+                        <span>${room.id}</span>
+                    </div>
+                    <button class="btn-sm w-full">一键加入</button>
+                `;
+                
+                roomCard.addEventListener('click', () => {
+                    vibrate();
+                    // 填充房间号和密码
+                    document.getElementById('room-id').value = room.id;
+                    document.getElementById('join-room-password').value = room.password || '';
+                    
+                    // 自动触发加入房间
+                    document.getElementById('btn-join-room-submit').click();
+                });
+                
+                quickJoinList.appendChild(roomCard);
+            });
+        }
+        
+        function loadUserSettings() {
+            // 加载用户名
+            const username = localStorage.getItem('username');
+            if (username) {
+                currentUser.name = username;
+                document.getElementById('username').value = username;
+            }
+            
+            // 加载音效设置
+            const soundEffects = localStorage.getItem('soundEffects') !== 'false';
+            document.getElementById('sound-effects').checked = soundEffects;
+            
+            // 加载音量设置
+            const soundVolume = localStorage.getItem('soundVolume') || '80';
+            document.getElementById('sound-volume').value = soundVolume;
+            
+            // 加载深色模式设置
+            const darkMode = localStorage.getItem('darkMode') !== 'false';
+            document.getElementById('dark-mode').checked = darkMode;
+            
+            // 加载动画效果设置
+            const animations = localStorage.getItem('animations') !== 'false';
+            document.getElementById('animations').checked = animations;
+            
+            // 加载自动重连设置
+            const autoReconnect = localStorage.getItem('autoReconnect') !== 'false';
+            document.getElementById('auto-reconnect').checked = autoReconnect;
+            
+            // 加载通知设置
+            const notifications = localStorage.getItem('notifications') !== 'false';
+            document.getElementById('notifications').checked = notifications;
+        }
+        
+        function saveUsername() {
+            const username = document.getElementById('username').value.trim();
+            
+            if (!username) {
+                showNotification('error', '错误', '用户名不能为空');
+                return;
+            }
+            
+            // 保存用户名
+            localStorage.setItem('username', username);
+            currentUser.name = username;
+            
+            showNotification('success', '保存成功', '用户名已更新');
+        }
+        
+        function clearCache() {
+            if (confirm('确定要清除所有缓存数据吗？这将删除您的游戏记录和设置。')) {
+                localStorage.clear();
+                showNotification('success', '清除成功', '缓存已清除');
+                
+                // 重新加载页面
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            }
+        }
+        
+        // 震动反馈
+        function initVibration() {
+            // 检查设备是否支持震动
+            if ('vibrate' in navigator) {
+                // 为所有按钮添加震动反馈
+                document.querySelectorAll('button, .btn-primary, .btn-secondary, .btn-outline').forEach(button => {
+                    button.addEventListener('click', () => {
+                        if (userSettings.vibration) {
+                            navigator.vibrate(50); // 50毫秒的轻微震动
+                        }
+                    });
+                });
+            }
+        }
+        
+        function vibrate(pattern = 50) {
+            if ('vibrate' in navigator && userSettings.vibration) {
+                navigator.vibrate(pattern);
+            }
+        }
+        
+        function handleServerResponse(data) {
+            // 模拟服务器响应
+            console.log('收到服务器响应:', data);
+            
+            // 根据响应类型处理
+            switch(data.type) {
+                case 'player_joined':
+                    // 玩家加入房间
+                    if (data.roomId === currentRoom.id) {
+                        updatePlayerList();
+                        addGameInfo(`${data.player.name}加入了房间`);
+                    }
+                    break;
+                case 'player_left':
+                    // 玩家离开房间
+                    if (data.roomId === currentRoom.id) {
+                        updatePlayerList();
+                        addGameInfo(`${data.player.name}离开了房间`);
+                    }
+                    break;
+                case 'game_started':
+                    // 游戏开始
+                    if (data.roomId === currentRoom.id) {
+                        showGameSection();
+                    }
+                    break;
+                case 'phase_changed':
+                    // 游戏阶段改变
+                    if (data.roomId === currentRoom.id) {
+                        gameState = data.gameState;
+                        updateGamePhase();
+                        updateGameCharacters();
+                        updateGameActions();
+                    }
+                    break;
+                case 'chat_message':
+                    // 聊天消息
+                    if (data.roomId === currentRoom.id && data.userId !== currentUser.id) {
+                        const chatMessages = document.getElementById('chat-messages');
+                        const messageDiv = document.createElement('div');
+                        messageDiv.className = 'flex items-start justify-end';
+                        
+                        messageDiv.innerHTML = `
+                            <div class="bg-dark bg-opacity-50 rounded-lg p-2 max-w-[80%]">
+                                <div class="flex items-center justify-between mb-1">
+                                    <span class="text-xs text-gray-400">${data.time}</span>
+                                    <span class="font-bold text-sm ml-2">${data.userName}</span>
+                                </div>
+                                <p class="text-sm">${data.message}</p>
+                            </div>
+                            <div class="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center ml-2 flex-shrink-0">
+                                <span class="text-white font-bold text-sm">${data.userName.charAt(0)}</span>
+                            </div>
+                        `;
+                        
+                        chatMessages.appendChild(messageDiv);
+                        chatMessages.scrollTop = chatMessages.scrollHeight;
+                    }
+                    break;
+            }
+        }
+        
+        // 自动保存游戏状态
+        setInterval(() => {
+            if (currentRoom.id) {
+                saveActiveGame();
+            }
+        }, 30000);
+        
+        // 页面卸载前保存游戏状态
+        window.addEventListener('beforeunload', () => {
+            if (currentRoom.id) {
+                saveActiveGame();
+            }
+        });
+        
+        // 监听设置变更
+        document.getElementById('sound-effects').addEventListener('change', function() {
+            localStorage.setItem('soundEffects', this.checked);
+            userSettings.soundEffects = this.checked;
+        });
+        
+        document.getElementById('vibration').addEventListener('change', function() {
+            localStorage.setItem('vibration', this.checked);
+            userSettings.vibration = this.checked;
+            if (this.checked) {
+                vibrate(100); // 测试震动
+            }
+        });
+        
+        document.getElementById('sound-volume').addEventListener('input', function() {
+            localStorage.setItem('soundVolume', this.value);
+        });
+        
+        document.getElementById('dark-mode').addEventListener('change', function() {
+            localStorage.setItem('darkMode', this.checked);
+            // 实际应用中这里应该切换深色/浅色模式
+        });
+        
+        document.getElementById('animations').addEventListener('change', function() {
+            localStorage.setItem('animations', this.checked);
+            // 实际应用中这里应该启用/禁用动画
+        });
+        
+        document.getElementById('auto-reconnect').addEventListener('change', function() {
+            localStorage.setItem('autoReconnect', this.checked);
+        });
+        
+        document.getElementById('notifications').addEventListener('change', function() {
+            localStorage.setItem('notifications', this.checked);
+        });
+        
+        // 监听聊天输入框回车事件
+        document.getElementById('chat-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendChat();
+            }
+        });
+        
+        // 数字键盘功能
+        const roomIdInput = document.getElementById('room-id');
+        const numericKeypad = document.getElementById('numeric-keypad');
+        
+        if (roomIdInput && numericKeypad) {
+            // 显示/隐藏数字键盘
+            roomIdInput.addEventListener('focus', function() {
+                numericKeypad.classList.remove('hidden');
+                // 阻止系统键盘弹出
+                this.blur();
+            });
+            
+            // 点击其他地方隐藏键盘
+            document.addEventListener('click', function(e) {
+                if (!roomIdInput.contains(e.target) && !numericKeypad.contains(e.target)) {
+                    numericKeypad.classList.add('hidden');
+                }
+            });
+            
+            // 键盘按钮事件
+            numericKeypad.querySelectorAll('.keypad-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const value = this.textContent.trim();
+                    const action = this.getAttribute('data-action');
+                    
+                    vibrate(30);
+                    
+                    if (action === 'clear') {
+                        roomIdInput.value = '';
+                    } else if (action === 'backspace') {
+                        roomIdInput.value = roomIdInput.value.slice(0, -1);
+                    } else if (value >= '0' && value <= '9') {
+                        if (roomIdInput.value.length < 6) {
+                            roomIdInput.value += value;
+                        }
+                    }
+                    
+                    // 触发input事件以更新验证状态
+                    roomIdInput.dispatchEvent(new Event('input'));
+                });
+            });
+        }
+        
+        // 监听房间号输入框，只允许输入数字
+        document.getElementById('room-id').addEventListener('input', function(e) {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+        
         // Socket.IO连接管理
         class SocketManager {
             constructor() {
@@ -1089,9 +3940,9 @@
             // 页面显示函数
             showRoomPage(room) {
                 // 隐藏其他页面
-                document.getElementById('home-page').classList.add('hidden');
-                document.getElementById('create-room-page').classList.add('hidden');
-                document.getElementById('join-room-page').classList.add('hidden');
+                document.getElementById('welcome-section').classList.add('hidden');
+                document.getElementById('create-room-section').classList.add('hidden');
+                document.getElementById('join-room-section').classList.add('hidden');
                 document.getElementById('game-page').classList.add('hidden');
                 
                 // 显示房间页面
@@ -1099,6 +3950,7 @@
                 
                 // 更新房间信息
                 document.getElementById('room-id-display').textContent = room.id;
+                document.getElementById('room-name-display').textContent = `房间名称: ${room.name}`;
                 document.getElementById('room-title').textContent = `房间: ${room.name}`;
                 document.getElementById('max-players').textContent = room.playerCount;
                 
@@ -1112,13 +3964,45 @@
                 } else {
                     startButton.classList.add('hidden');
                 }
+                
+                // 显示房间创建成功通知
+                if (this.userInfo && this.userInfo.isHost) {
+                    this.showRoomCreatedNotification(room);
+                }
+            }
+
+            // 显示房间创建成功通知
+            showRoomCreatedNotification(room) {
+                const notification = document.createElement('div');
+                notification.className = 'notification success';
+                notification.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h4 class="font-bold text-gray-900">🎉 房间创建成功！</h4>
+                            <p class="text-sm text-gray-600 mt-1">房间号: <strong class="text-accent">${room.id}</strong></p>
+                            <p class="text-xs text-gray-500 mt-2">邀请好友加入游戏，或直接开始游戏</p>
+                        </div>
+                        <button class="text-gray-400 hover:text-gray-600" onclick="this.parentElement.parentElement.remove()">
+                            <i class="fa fa-times"></i>
+                        </button>
+                    </div>
+                `;
+                
+                document.body.appendChild(notification);
+                
+                // 自动移除通知
+                setTimeout(() => {
+                    if (notification.parentElement) {
+                        notification.remove();
+                    }
+                }, 8000);
             }
 
             showGamePage(room) {
                 // 隐藏其他页面
-                document.getElementById('home-page').classList.add('hidden');
-                document.getElementById('create-room-page').classList.add('hidden');
-                document.getElementById('join-room-page').classList.add('hidden');
+                document.getElementById('welcome-section').classList.add('hidden');
+                document.getElementById('create-room-section').classList.add('hidden');
+                document.getElementById('join-room-section').classList.add('hidden');
                 document.getElementById('room-page').classList.add('hidden');
                 
                 // 显示游戏页面
@@ -1350,11 +4234,11 @@
         function setupEventListeners() {
             // 首页按钮
             document.getElementById('btn-create-room').addEventListener('click', () => {
-                showCreateRoomPage();
+                showCreateRoomSection();
             });
             
             document.getElementById('btn-join-room').addEventListener('click', () => {
-                showJoinRoomPage();
+                showJoinRoomSection();
             });
             
             document.getElementById('btn-quick-join').addEventListener('click', () => {
@@ -1393,6 +4277,12 @@
                 if (socketManager.currentRoom) {
                     navigator.clipboard.writeText(socketManager.currentRoom.id);
                     socketManager.showNotification('success', '复制成功', '房间号已复制到剪贴板');
+                }
+            });
+            
+            document.getElementById('btn-share-room').addEventListener('click', () => {
+                if (socketManager.currentRoom) {
+                    shareRoom(socketManager.currentRoom);
                 }
             });
             
@@ -1440,27 +4330,30 @@
             document.getElementById('btn-close-mobile-menu').addEventListener('click', () => {
                 document.getElementById('mobile-menu').classList.add('hidden');
             });
+            
+            // 其他现有事件绑定...
+            bindEvents();
         }
 
         // 页面显示函数
         function showHomePage() {
-            document.getElementById('home-page').classList.remove('hidden');
-            document.getElementById('create-room-page').classList.add('hidden');
-            document.getElementById('join-room-page').classList.add('hidden');
+            document.getElementById('welcome-section').classList.remove('hidden');
+            document.getElementById('create-room-section').classList.add('hidden');
+            document.getElementById('join-room-section').classList.add('hidden');
             document.getElementById('room-page').classList.add('hidden');
             document.getElementById('game-page').classList.add('hidden');
         }
 
         function showCreateRoomPage() {
-            document.getElementById('home-page').classList.add('hidden');
-            document.getElementById('create-room-page').classList.remove('hidden');
-            document.getElementById('join-room-page').classList.add('hidden');
+            document.getElementById('welcome-section').classList.add('hidden');
+            document.getElementById('create-room-section').classList.remove('hidden');
+            document.getElementById('join-room-section').classList.add('hidden');
         }
 
         function showJoinRoomPage() {
-            document.getElementById('home-page').classList.add('hidden');
-            document.getElementById('create-room-page').classList.add('hidden');
-            document.getElementById('join-room-page').classList.remove('hidden');
+            document.getElementById('welcome-section').classList.add('hidden');
+            document.getElementById('create-room-section').classList.add('hidden');
+            document.getElementById('join-room-section').classList.remove('hidden');
         }
 
         // 发送聊天消息
@@ -1639,6 +4532,137 @@
                 }, 1000);
             }
         }
+
+        // 分享房间功能
+        function shareRoom(room) {
+            const shareText = `🎮 狼人杀游戏邀请\n\n房间号: ${room.id}\n房间名称: ${room.name}\n玩家数量: ${room.players.length}/${room.playerCount}\n\n快来加入我的狼人杀游戏吧！`;
+            
+            // 创建分享模态框
+            const shareModal = document.createElement('div');
+            shareModal.className = 'fixed inset-0 bg-black bg-opacity-80 z-50 flex items-center justify-center';
+            shareModal.innerHTML = `
+                <div class="card max-w-md w-full mx-4">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-2xl font-bold">分享房间</h3>
+                        <button class="text-gray-400 hover:text-white text-2xl" onclick="this.parentElement.parentElement.parentElement.remove()">
+                            <i class="fa fa-times"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div class="bg-dark bg-opacity-50 p-4 rounded-lg">
+                            <h4 class="font-bold mb-2">房间信息</h4>
+                            <p><strong>房间号:</strong> <span class="text-accent font-mono">${room.id}</span></p>
+                            <p><strong>房间名称:</strong> ${room.name}</p>
+                            <p><strong>玩家:</strong> ${room.players.length}/${room.playerCount}</p>
+                        </div>
+                        
+                        <div class="bg-dark bg-opacity-50 p-4 rounded-lg">
+                            <h4 class="font-bold mb-2">分享方式</h4>
+                            <div class="grid grid-cols-2 gap-2">
+                                <button class="btn-secondary" onclick="copyRoomInfo('${room.id}', '${room.name}')">
+                                    <i class="fa fa-copy mr-1"></i>复制信息
+                                </button>
+                                <button class="btn-secondary" onclick="copyRoomLink('${room.id}')">
+                                    <i class="fa fa-link mr-1"></i>复制链接
+                                </button>
+                                <button class="btn-secondary" onclick="shareToWeChat('${room.id}', '${room.name}')">
+                                    <i class="fa fa-wechat mr-1"></i>微信分享
+                                </button>
+                                <button class="btn-secondary" onclick="shareToQQ('${room.id}', '${room.name}')">
+                                    <i class="fa fa-qq mr-1"></i>QQ分享
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="text-center">
+                            <button class="btn-outline w-full" onclick="this.parentElement.parentElement.parentElement.parentElement.remove()">
+                                <i class="fa fa-times mr-2"></i>关闭
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(shareModal);
+        }
+
+        // 复制房间信息
+        function copyRoomInfo(roomId, roomName) {
+            const text = `狼人杀游戏邀请\n房间号: ${roomId}\n房间名称: ${roomName}\n快来加入游戏吧！`;
+            navigator.clipboard.writeText(text);
+            socketManager.showNotification('success', '复制成功', '房间信息已复制到剪贴板');
+        }
+
+        // 复制房间链接
+        function copyRoomLink(roomId) {
+            const currentUrl = window.location.href.split('?')[0];
+            const roomLink = `${currentUrl}?room=${roomId}`;
+            navigator.clipboard.writeText(roomLink);
+            socketManager.showNotification('success', '复制成功', '房间链接已复制到剪贴板');
+        }
+
+        // 微信分享
+        function shareToWeChat(roomId, roomName) {
+            const text = `狼人杀游戏邀请\n房间号: ${roomId}\n房间名称: ${roomName}\n点击链接加入游戏: ${window.location.href.split('?')[0]}?room=${roomId}`;
+            
+            // 模拟微信分享（实际环境中需要调用微信JS-SDK）
+            if (navigator.share) {
+                navigator.share({
+                    title: '狼人杀游戏邀请',
+                    text: text,
+                    url: window.location.href.split('?')[0]
+                }).catch(() => {
+                    copyRoomInfo(roomId, roomName);
+                });
+            } else {
+                copyRoomInfo(roomId, roomName);
+                socketManager.showNotification('info', '分享提示', '房间信息已复制，请粘贴到微信中分享');
+            }
+        }
+
+        // QQ分享
+        function shareToQQ(roomId, roomName) {
+            const text = `狼人杀游戏邀请\n房间号: ${roomId}\n房间名称: ${roomName}\n快来加入游戏吧！`;
+            
+            // 模拟QQ分享
+            if (navigator.share) {
+                navigator.share({
+                    title: '狼人杀游戏邀请',
+                    text: text,
+                    url: window.location.href.split('?')[0]
+                }).catch(() => {
+                    copyRoomInfo(roomId, roomName);
+                });
+            } else {
+                copyRoomInfo(roomId, roomName);
+                socketManager.showNotification('info', '分享提示', '房间信息已复制，请粘贴到QQ中分享');
+            }
+        }
+
+        // 页面加载时检查URL参数
+        function checkUrlParams() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const roomId = urlParams.get('room');
+            
+            if (roomId) {
+                // 如果有房间参数，自动跳转到加入房间页面
+                setTimeout(() => {
+                    document.getElementById('join-room-id').value = roomId;
+                    showJoinRoomSection();
+                    
+                    socketManager.showNotification('info', '房间邀请', `检测到房间邀请: ${roomId}，请填写昵称加入游戏`);
+                }, 1000);
+            }
+        }
+
+        // 在页面加载完成后检查URL参数
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(checkUrlParams, 500);
+        });
+
+        // 初始化快速加入房间
+        initQuickJoinRooms();
     </script>
 </body>
 </html>
